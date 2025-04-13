@@ -27,81 +27,76 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col justify-center items-center p-4 sm:p-6 md:p-8">
-      <div className="w-full max-w-md mx-auto">
-        {/* Card component using native Tailwind */}
-        <div className="bg-black rounded-lg shadow-2xl border border-gray-800 p-8">
-          <div className="flex flex-col items-center space-y-8">
-            {/* Logo */}
-            <div className="w-40 sm:w-48 mx-auto">
+    <div className="flex min-h-screen w-full items-center justify-center bg-gray-900 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        {/* Card with subtle gradient background */}
+        <div className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gradient-to-b from-gray-800 to-black p-8 shadow-2xl">
+          {/* Subtle glow effect */}
+          <div className="absolute -top-10 left-1/2 h-40 w-80 -translate-x-1/2 transform rounded-full bg-green-500 opacity-10 blur-3xl"></div>
+
+          <div className="relative z-10 flex flex-col items-center space-y-5">
+            <h2 className="text-center text-lg font-medium text-blue-300">Welcome</h2>
+
+            {/* Larger logo with animation */}
+            <div className="w-80 sm:w-48 mx-auto transition-all duration-300 hover:scale-105">
               <img
                 src="/src/assets/early_spring_black.jpg"
                 alt="EarlySpring Logo"
-                className="w-full h-auto"
+                className="h-auto w-full rounded-lg"
               />
             </div>
 
-            {/* Error display */}
+            {/* Error display with improved styling */}
             {(error || authState.error) && (
-              <div className="w-full bg-red-900/30 border border-red-800 text-red-300 px-4 py-3 rounded-lg">
-                {error || authState.error}
+              <div className="w-full rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-red-300">
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span>{error || authState.error}</span>
+                </div>
               </div>
             )}
 
-            {/* Login button */}
+            {/* Login button with improved styling */}
             <button
               onClick={handleGoogleLogin}
               disabled={isLoggingIn || authState.loading}
-              className={`w-full flex items-center justify-center py-3 px-4 border border-gray-700 rounded-lg bg-gray-800 hover:bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
+              className={`group relative w-full overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 py-3 px-4 text-white shadow-lg transition-all duration-300 hover:from-blue-500 hover:to-blue-600 hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
                 (isLoggingIn || authState.loading) ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >
-              {isLoggingIn || authState.loading ? (
-                <>
-                  {/* Custom spinner */}
-                  <div className="animate-spin h-5 w-5 mr-3 border-t-2 border-b-2 border-white rounded-full"></div>
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
-                  </svg>
-                  Continue with Google
-                </>
-              )}
+              <span className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:translate-x-full group-hover:opacity-100"></span>
+              <span className="relative flex items-center justify-center">
+                {isLoggingIn || authState.loading ? (
+                  <>
+                    {/* Improved spinner */}
+                    <svg className="mr-3 h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    {/* Google logo */}
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" className="mr-3 h-5 w-5" />
+                    <span className="font-medium">Continue with Google</span>
+                  </>
+                )}
+              </span>
             </button>
 
-            {/* Terms of service */}
-            <div className="text-sm text-gray-400 text-center mt-2">
+            {/* Terms of service with improved styling */}
+            <div className="mt-6 text-center text-sm text-gray-400">
               <p>By continuing, you agree to our</p>
-              <div className="mt-1">
-                <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Terms of Service</a>
-                {' • '}
-                <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Privacy Policy</a>
+              <div className="mt-1 flex justify-center space-x-3">
+                <a href="#" className="text-blue-400 transition-colors hover:text-blue-300 hover:underline">Terms of Service</a>
+                <span className="text-gray-600">•</span>
+                <a href="#" className="text-blue-400 transition-colors hover:text-blue-300 hover:underline">Privacy Policy</a>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* App tagline - optional, remove if not needed */}
-        <div className="mt-6 text-center">
-          <p className="text-green-400">Wake up refreshed, grow your plant</p>
         </div>
       </div>
     </div>
