@@ -1,22 +1,24 @@
+![EarlySpring](./earlyspring/src/assets/early_spring_black.jpg)
+
 # EarlySpring Alarm Clock App
 
-A React-based alarm clock application with MongoDB Atlas and Google OAuth integration.
+A React-based alarm clock application with MongoDB, Google OAuth, TTS and Open-Meteo integration.
 
 ## Features
 
 - Text-to-speech alarm notifications
 - Weather forecast integration
 - Gamification to prevent snooze with a growing plant
-- Persistent data storage in MongoDB Atlas
-- Direct Google OAuth authentication
+- Persistent data storage in MongoDB
+- Direct Google OAuth authentication with Firebase
 - Mobile-first responsive design
 
 ## Tech Stack
 
 - **Frontend**: React with TypeScript (Vite)
-- **Database**: MongoDB Atlas (using Data API directly from frontend)
-- **Authentication**: Google OAuth 2.0 (direct implementation)
-- **Styling**: CSS with Tailwind and Flowbite
+- **Database**: MongoDB
+- **Authentication**: Google OAuth
+- **Styling**: CSS with Tailwind
 
 ## Project Setup
 
@@ -24,9 +26,28 @@ A React-based alarm clock application with MongoDB Atlas and Google OAuth integr
 
 - Node.js (v16 or later)
 - NPM or Yarn
-- MongoDB Atlas account
-- Google Cloud Platform account for OAuth
+- MongoDB locally or in the cloud
+- Google Cloud Platform account for OAuth and Firebase
 
+### Start app:
+
+1. Start backend
+    ```
+    cd backend
+
+    npm start
+    ```
+2. Start frontend
+    ```
+    cd earlyspring
+
+    npm install
+
+    npm run dev
+
+    ```
+
+# TODO innentol
 ### Environment Variables
 
 Create a `.env` file in the root directory with the following variables:
@@ -63,23 +84,6 @@ VITE_HUGGINGFACE_API_KEY=your_huggingface_api_key
 3. Create OAuth 2.0 credentials
 4. Add the redirect URI: `http://localhost:5173/auth/callback` (for development)
 5. Get the Client ID
-
-### Installation and Running
-
-1. Install dependencies:
-   ```
-   npm install
-   ```
-
-2. Start the development server:
-   ```
-   npm run dev
-   ```
-
-3. Build for production:
-   ```
-   npm run build
-   ```
 
 ## Project Structure
 

@@ -43,18 +43,23 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache if available
+// Fetch event - serve from cache if available, but don't intercept API calls
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
-});
+    // Skip API requests
+    if (event.request.url.includes('/api/')) {
+      return;
+    }
+
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request);
+        })
+    );
+  });
 
 // Push notification event
 self.addEventListener('push', (event) => {

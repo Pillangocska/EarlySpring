@@ -9,6 +9,7 @@ import { scheduleAlarm, getTimeUntilAlarm } from '../../utils/alarmScheduler';
 import { requestNotificationPermission } from '../../utils/notifications';
 
 import AlarmList from './AlarmList';
+import AlarmForm from './AlarmForm';
 import WeatherDisplay from '../weather/WeatherDisplay';
 import Plant from '../gamification/Plant';
 
@@ -22,6 +23,8 @@ const AlarmDashboard: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAlarmForm, setShowAlarmForm] = useState<boolean>(false);
+  const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
 
   // Load user's alarms
   useEffect(() => {
@@ -182,19 +185,43 @@ const AlarmDashboard: React.FC = () => {
     }
   };
 
+  // Handle opening the alarm form modal
+  const handleAddAlarm = () => {
+    setEditingAlarm(null);
+    setShowAlarmForm(true);
+  };
+
+  // Handle closing the alarm form modal
+  const handleCloseAlarmForm = () => {
+    setShowAlarmForm(false);
+    setEditingAlarm(null);
+  };
+
+  // Handle saving a new alarm
+  const handleSaveAlarm = async (alarmData: Omit<Alarm, '_id' | 'userId'>) => {
+    if (!authState.user?._id) return;
+
+    try {
+      setShowAlarmForm(false);
+      handleRefresh(); // Refresh alarms to show the new one
+    } catch (error) {
+      console.error('Error saving alarm:', error);
+    }
+  };
+
   // Show a connection error banner if there's an error in auth state
   const ConnectionErrorBanner = () => {
     if (authState.error || error) {
       return (
-        <div className="bg-yellow-900 bg-opacity-50 text-yellow-200 p-3 mb-4 rounded-lg">
+        <div className="mb-4 rounded-lg bg-yellow-900/30 p-3 text-yellow-200">
           <div className="flex items-start">
-            <svg className="w-5 h-5 mr-2 mt-0.5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="mt-0.5 mr-2 h-5 w-5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div>
               <p className="font-semibold">Connection issue detected</p>
-              <p className="text-sm mt-1">{authState.error || error}</p>
-              <p className="text-sm mt-2">Basic functionality is available, but some features may be limited.</p>
+              <p className="mt-1 text-sm">{authState.error || error}</p>
+              <p className="mt-2 text-sm">Basic functionality is available, but some features may be limited.</p>
             </div>
           </div>
         </div>
@@ -203,108 +230,113 @@ const AlarmDashboard: React.FC = () => {
     return null;
   };
 
+  // Get active days of the week for alarm display
+  const getActiveDaysDisplay = (alarm: Alarm) => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map((day, index) => {
+      const isActive = alarm.activeDays?.includes(index) || false;
+      return (
+        <span key={day} className={`${isActive ? 'text-white' : 'text-gray-500'}`}>
+          {day}{' '}
+        </span>
+      );
+    });
+  };
+
   return (
-    <div className="alarm-dashboard min-h-screen bg-black text-white p-4">
-      <div className="max-w-lg mx-auto">
-        {/* App Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-200">EarlySpring</h1>
-          <button
-            onClick={handleRefresh}
-            className="p-2 rounded-full bg-gray-800 text-gray-300"
-            disabled={isLoading}
-          >
-            <svg
-              className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
-        </div>
+    <div className="min-h-screen bg-black text-white p-4">
+      {/* App Header with Logo/Title */}
+      <div className="pt-6 pb-6 text-center">
+        <h1 className="text-5xl font-bold text-gray-300">EarlySpring</h1>
+      </div>
 
-        {/* Connection Error Banner */}
+      {/* Plant Visualization */}
+      <div className="mb-6 flex justify-center">
+        <Plant
+          health={authState.user?.plantHealth || 100}
+          level={authState.user?.plantLevel || 1}
+        />
+      </div>
+
+      {/* Connection Error Banner */}
+      <div className="mx-auto max-w-md">
         <ConnectionErrorBanner />
+      </div>
 
-        {/* Plant Visualization */}
-        <div className="mb-6 flex justify-center">
-          <Plant
-            health={authState.user?.plantHealth || 100}
-            level={authState.user?.plantLevel || 1}
-          />
-        </div>
-
-        {/* Weather Display */}
-        <div className="mb-6">
-          <WeatherDisplay />
-        </div>
-
-        {/* Next Alarm */}
-        <div className="next-alarm-section bg-gray-900 rounded-xl p-4 mb-6">
-          <div className="flex justify-between items-center">
+      {/* Weather Display Card */}
+      <div className="mx-auto mb-4 max-w-md overflow-hidden rounded-xl bg-gray-900">
+        <div className="p-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Tomorrow</h2>
+              <h2 className="text-xl font-bold">Tomorrow</h2>
               <p className="text-gray-400">{currentDate}</p>
             </div>
-            <div className="text-right">
-              <div className="text-xl">
-                {weatherData && (
-                  <>
-                    <span className="text-green-400">↑ {Math.round(weatherData.current.temp_max)}°C</span>
-                    <span className="mx-1 text-gray-400">|</span>
-                    <span className="text-blue-400">↓ {Math.round(weatherData.current.temp_min)}°C</span>
-                  </>
-                )}
-              </div>
+            <div className="flex items-center">
               {weatherData && (
-                <div className="flex items-center justify-end">
-                  <span className="mr-2 text-gray-300">{weatherData.current.weather[0].main}</span>
-                  {/* Weather icon would go here */}
-                </div>
+                <>
+                  <div className="mr-2 text-lg">
+                    <span className="text-green-400">↑ {Math.round(weatherData.current.temp_max)}°C</span>
+                    <span className="mx-1 text-gray-500">|</span>
+                    <span className="text-blue-400">↓ {Math.round(weatherData.current.temp_min)}°C</span>
+                  </div>
+                </>
               )}
             </div>
           </div>
 
           {/* Hourly forecast */}
-          <div className="forecast grid grid-cols-6 gap-2 mt-4">
-            {weatherData?.forecast.map((hour, index) => (
+          <div className="mt-4 grid grid-cols-6 gap-2">
+            {weatherData?.forecast?.slice(0, 6).map((hour, index) => (
               <div key={index} className="text-center">
                 <div className="text-sm text-gray-400">{hour.time}</div>
-                <div className="text-sm">{Math.round(hour.temp)}°C</div>
+                <div className="text-base">{Math.round(hour.temp)}°C</div>
               </div>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Alarms */}
-        <div className="alarms-section bg-gray-900 rounded-xl p-4 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Alarms</h2>
-            <p className="text-sm text-gray-400">
-              {nextAlarm
-                ? `Earliest at ${nextAlarm.time} tomorrow, ${timeUntilNextAlarm}`
-                : 'No alarms set'}
-            </p>
-            <button className="bg-gray-800 text-white p-2 rounded-full">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </button>
+      {/* Alarms Section */}
+      <div className="mx-auto max-w-md overflow-hidden rounded-xl bg-gray-900">
+        <div className="p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-bold">Alarms</h2>
+            <div className="flex items-center">
+              <p className="mr-3 text-xs text-gray-400">
+                {nextAlarm
+                  ? `Earliest at ${nextAlarm.time} tomorrow, ${timeUntilNextAlarm}`
+                  : 'No alarms set'}
+              </p>
+              <button
+                onClick={handleAddAlarm}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+            </div>
           </div>
 
+          {/* Alarm list */}
           <AlarmList
             alarms={alarms}
             onAlarmsChanged={handleRefresh}
           />
         </div>
       </div>
+
+      {/* Alarm Form Modal */}
+      {showAlarmForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
+          <div className="w-full max-h-[90vh] max-w-md overflow-y-auto rounded-xl bg-gray-900">
+            <AlarmForm
+              existingAlarm={editingAlarm}
+              onSave={handleSaveAlarm}
+              onClose={handleCloseAlarmForm}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
