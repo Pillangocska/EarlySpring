@@ -35,7 +35,7 @@ const Login: React.FC = () => {
           <div className="absolute -top-10 left-1/2 h-40 w-80 -translate-x-1/2 transform rounded-full bg-green-500 opacity-10 blur-3xl"></div>
 
           <div className="relative z-10 flex flex-col items-center space-y-5">
-            <h2 className="text-center text-lg font-medium text-blue-300">Welcome</h2>
+            <h2 className="text-center text-lg font-medium text-green-300">Welcome</h2>
 
             {/* Larger logo with animation */}
             <div className="w-80 sm:w-48 mx-auto transition-all duration-300 hover:scale-105">
@@ -91,9 +91,9 @@ const Login: React.FC = () => {
             <div className="mt-6 text-center text-sm text-gray-400">
               <p>By continuing, you agree to our</p>
               <div className="mt-1 flex justify-center space-x-3">
-                <a href="#" className="text-blue-400 transition-colors hover:text-blue-300 hover:underline">Terms of Service</a>
+                <a href="#" className="text-green-400 transition-colors hover:text-green-300 hover:underline">Terms of Service</a>
                 <span className="text-gray-600">•</span>
-                <a href="#" className="text-blue-400 transition-colors hover:text-blue-300 hover:underline">Privacy Policy</a>
+                <a href="#" className="text-green-400 transition-colors hover:text-green-300 hover:underline">Privacy Policy</a>
               </div>
             </div>
           </div>

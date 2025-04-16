@@ -5,7 +5,7 @@ import { Alarm } from '../../types';
 import AlarmItem from './AlarmItem';
 import AlarmForm from './AlarmForm';
 import { useAuth } from '../../contexts/AuthContext';
-import { createAlarm } from '../../services/alarmService';
+import { createAlarm, updateAlarm } from '../../services/alarmService';
 
 interface AlarmListProps {
   alarms: Alarm[];
@@ -17,21 +17,34 @@ const AlarmList: React.FC<AlarmListProps> = ({ alarms, onAlarmsChanged }) => {
   const [showAlarmForm, setShowAlarmForm] = useState<boolean>(false);
   const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
 
-  // Handle creating a new alarm
-  const handleCreateAlarm = async (alarmData: Omit<Alarm, '_id' | 'userId'>) => {
+  // Handle saving an alarm (create or update)
+  const handleSaveAlarm = async (alarmData: Omit<Alarm, '_id' | 'userId'>) => {
     if (!authState.user?._id) return;
 
     try {
-      await createAlarm({
-        ...alarmData,
-        userId: authState.user._id
-      });
+      if (editingAlarm && editingAlarm._id) {
+        // Update existing alarm
+        await updateAlarm(
+          editingAlarm._id,
+          {
+            ...alarmData,
+            userId: authState.user._id
+          }
+        );
+      } else {
+        // Create new alarm
+        await createAlarm({
+          ...alarmData,
+          userId: authState.user._id
+        });
+      }
 
       // Close the form and refresh alarms
       setShowAlarmForm(false);
+      setEditingAlarm(null);
       onAlarmsChanged();
     } catch (error) {
-      console.error('Error creating alarm:', error);
+      console.error('Error saving alarm:', error);
     }
   };
 
@@ -92,7 +105,7 @@ const AlarmList: React.FC<AlarmListProps> = ({ alarms, onAlarmsChanged }) => {
           <div className="bg-gray-900 rounded-xl max-w-md w-full max-h-screen overflow-y-auto">
             <AlarmForm
               existingAlarm={editingAlarm}
-              onSave={handleCreateAlarm}
+              onSave={handleSaveAlarm}
               onClose={handleCloseForm}
             />
           </div>

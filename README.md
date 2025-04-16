@@ -28,6 +28,7 @@ A React-based alarm clock application with MongoDB, Google OAuth, TTS and Open-M
 - NPM or Yarn
 - MongoDB locally or in the cloud
 - Google Cloud Platform account for OAuth and Firebase
+- For development only: install Tailwind -> https://tailwindcss.com/docs/installation/using-vite
 
 ### Start app:
 
@@ -111,7 +112,6 @@ VITE_HUGGINGFACE_API_KEY=your_huggingface_api_key
 
 - `AuthContext.tsx` - Manages authentication state
 - `Login.tsx` - Login page with Google OAuth button
-- `AuthCallback.tsx` - Handles OAuth redirect and token exchange
 
 ### Core Components
 
