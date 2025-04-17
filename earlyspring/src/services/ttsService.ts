@@ -1,9 +1,8 @@
 // src/services/ttsService.ts
 
-// API key for the HuggingFace API
-const HUGGINGFACE_API_KEY = import.meta.env.VITE_HUGGINGFACE_API_KEY;
-const HUGGINGFACE_MODEL = 'facebook/mms-tts-eng';
-const HUGGINGFACE_API_URL = `https://api-inference.huggingface.co/models/${HUGGINGFACE_MODEL}`;
+// Configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const TTS_PROXY_ENDPOINT = `${API_BASE_URL}/tts-proxy`;
 
 // Fallback to browser's built-in TTS if HuggingFace fails
 const useBrowserTTS = (text: string): Promise<void> => {
@@ -33,25 +32,27 @@ const useBrowserTTS = (text: string): Promise<void> => {
   });
 };
 
-// Use HuggingFace TTS API
-const useHuggingFaceTTS = async (text: string): Promise<ArrayBuffer> => {
+// Use proxy server to make request to HuggingFace
+const useProxyTTS = async (text: string): Promise<ArrayBuffer> => {
   try {
-    const response = await fetch(HUGGINGFACE_API_URL, {
+    console.log('Using backend proxy for TTS request');
+
+    const response = await fetch(TTS_PROXY_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ inputs: text })
+      body: JSON.stringify({ text })
     });
 
     if (!response.ok) {
-      throw new Error(`HuggingFace API error: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Proxy server error: ${response.status} ${response.statusText} ${errorData.error || ''}`);
     }
 
     return await response.arrayBuffer();
   } catch (error) {
-    console.error('HuggingFace TTS error:', error);
+    console.error('Proxy TTS error:', error);
     throw error;
   }
 };
@@ -59,54 +60,57 @@ const useHuggingFaceTTS = async (text: string): Promise<ArrayBuffer> => {
 // Play audio from array buffer
 const playAudio = (audioData: ArrayBuffer): Promise<void> => {
   return new Promise((resolve, reject) => {
-    // Create audio context
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    try {
+      // Create audio context
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
-    // Decode audio data
-    audioContext.decodeAudioData(
-      audioData,
-      (buffer) => {
-        // Create source node
-        const source = audioContext.createBufferSource();
-        source.buffer = buffer;
+      // Decode audio data
+      audioContext.decodeAudioData(
+        audioData,
+        (buffer) => {
+          // Create source node
+          const source = audioContext.createBufferSource();
+          source.buffer = buffer;
 
-        // Connect to output
-        source.connect(audioContext.destination);
+          // Connect to output
+          source.connect(audioContext.destination);
 
-        // Set callbacks
-        source.onended = () => {
-          resolve();
-          audioContext.close();
-        };
+          // Set callbacks
+          source.onended = () => {
+            resolve();
+            audioContext.close().catch(err => console.warn('Error closing audio context:', err));
+          };
 
-        // Start playing
-        source.start(0);
-      },
-      (error) => {
-        reject(new Error(`Error decoding audio data: ${error}`));
-        audioContext.close();
-      }
-    );
+          // Start playing
+          source.start(0);
+        },
+        (error) => {
+          reject(new Error(`Error decoding audio data: ${error}`));
+          audioContext.close().catch(err => console.warn('Error closing audio context:', err));
+        }
+      );
+    } catch (error) {
+      reject(new Error(`Error setting up audio playback: ${error}`));
+    }
   });
 };
 
 // Main TTS function with fallback
 export const speakText = async (text: string): Promise<void> => {
   try {
-    if (!HUGGINGFACE_API_KEY) {
-      // If no API key, use browser TTS
-      await useBrowserTTS(text);
-      return;
-    }
-
-    // Try HuggingFace TTS
-    const audioData = await useHuggingFaceTTS(text);
+    // Try proxy-based TTS
+    const audioData = await useProxyTTS(text);
     await playAudio(audioData);
   } catch (error) {
-    console.error('TTS error, falling back to browser TTS:', error);
+    console.warn('TTS error, falling back to browser TTS:', error);
     // Fallback to browser TTS
     await useBrowserTTS(text);
   }
+};
+
+// Generate weather text from current conditions
+export const generateWeatherText = (temp: number, condition: string): string => {
+  return `The weather today is ${condition.toLowerCase()} with a temperature of ${Math.round(temp)} degrees Celsius.`;
 };
 
 // Prepare and speak alarm notification with weather
@@ -125,6 +129,7 @@ export const speakAlarmNotification = async (
     text = `${text} ${weatherText}`;
   }
 
+  console.log('Speaking alarm notification:', text);
   await speakText(text);
 };
 

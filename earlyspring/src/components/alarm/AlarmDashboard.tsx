@@ -408,193 +408,196 @@ const AlarmDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-gray-800 to-black px-4 text-white">
-      {/* Subtle glow effect */}
-      <div className="absolute -top-20 left-1/2 h-40 w-80 -translate-x-1/2 transform rounded-full bg-green-500 opacity-10 blur-3xl"></div>
-      <div className="absolute top-1/2 left-1/3 h-40 w-80 -translate-x-1/2 transform rounded-full bg-blue-500 opacity-10 blur-3xl"></div>
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-800 to-black text-white">
+      {/* Fixed position background with full height */}
+      <div className="fixed inset-0 bg-gradient-to-b from-gray-800 to-black -z-10"></div>
 
-      {/* Content with relative positioning for z-index */}
-      <div className="relative z-10">
-        {/* App Header with Logo/Title */}
-        <div className="pt-5 pb-7 text-center">
-          <h1 className="text-5xl font-bold text-green-300">EarlySpring</h1>
-          <p className="text-gray-400 mt-2">{currentTime} • {currentDate}</p>
-          <div className="absolute -bottom-6 left-0 right-0 h-8 bg-gradient-to-b from-gray-800 to-transparent"></div>
-        </div>
+      {/* Content container with padding */}
+      <div className="relative w-full px-4 pb-16">
+        {/* Subtle glow effects */}
+        <div className="absolute -top-20 left-1/2 h-40 w-80 -translate-x-1/2 transform rounded-full bg-green-500 opacity-10 blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/3 h-40 w-80 -translate-x-1/2 transform rounded-full bg-blue-500 opacity-10 blur-3xl"></div>
 
-        {/* Plant Visualization */}
-        <div className="flex justify-center -mb-4 -mt-8">
-          <Plant
-            // TODO just for testing
-            //health={60}
-            //level={4}
-            health={authState.user?.plantHealth || 100}
-            level={authState.user?.plantLevel || 3}
-          />
-        </div>
-
-        {/* Connection Error Banner */}
-        <div className="mx-auto max-w-md">
-          <ConnectionErrorBanner />
-        </div>
-
-        {/* Main Content Cards */}
-        <div className="mx-auto max-w-md space-y-6">
-          {/* Weather Display Card */}
-          <div className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gradient-to-b from-gray-800 to-black p-5 shadow-2xl">
-            <div className="relative z-10">
-              {/* Current weather */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex flex-col">
-                  <div className="flex items-center">
-                    {weatherData && (
-                      <WeatherIcon
-                        condition={weatherData.current.weather[0].main}
-                        isNight={isNight}
-                        size="lg"
-                      />
-                    )}
-                    <span className="text-3xl font-bold ml-3">
-                      {weatherData ? `${Math.round(weatherData.current.temp)}°C` : '--°C'}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-300 mt-1">
-                    {weatherData ? weatherData.current.weather[0].description : 'Loading weather...'}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-lg font-medium">Today</div>
-                  <div className="text-sm text-gray-300">{currentDate}</div>
-                  {weatherData && (
-                    <div className="flex mt-2 text-sm font-medium">
-                      <div className="flex items-center text-red-400">
-                        <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <polyline points="18 15 12 9 6 15"></polyline>
-                        </svg>
-                        {`${Math.round(weatherData.current.temp_max)}°C`}
-                      </div>
-                      <div className="flex items-center text-blue-400 ml-3">
-                        <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                        {`${Math.round(weatherData.current.temp_min)}°C`}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-gray-700 my-4"></div>
-
-              {/* Hourly forecast */}
-              {weatherData ? (
-                <div className="forecast-container">
-                  <h3 className="text-sm font-medium text-gray-400 mb-3">Hourly Forecast</h3>
-                  <div className="grid grid-cols-6 gap-2">
-                    {weatherData.forecast.map((item, index) => (
-                      <div key={index} className="forecast-item bg-gray-800 bg-opacity-40 rounded-lg p-2 flex flex-col items-center hover:bg-opacity-60 transition-colors">
-                        <span className="text-xs font-medium">{item.time}</span>
-                        <div className="my-2">
-                          <WeatherIcon condition={item.weather.main} isNight={isNight} size="sm" />
-                        </div>
-                        <span className="text-sm font-medium">{`${Math.round(item.temp)}°C`}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 w-24 bg-gray-700 rounded"></div>
-                  <div className="grid grid-cols-6 gap-2">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div key={i} className="flex flex-col items-center">
-                        <div className="h-3 w-10 bg-gray-700 rounded mb-2"></div>
-                        <div className="h-6 w-6 bg-gray-700 rounded-full mb-2"></div>
-                        <div className="h-3 w-8 bg-gray-700 rounded"></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+        {/* Content with relative positioning for z-index */}
+        <div className="relative z-10">
+          {/* App Header with Logo/Title */}
+          <div className="pt-5 pb-7 text-center">
+            <h1 className="text-5xl font-bold text-green-300">EarlySpring</h1>
+            <p className="text-gray-400 mt-2">{currentTime} • {currentDate}</p>
+            <div className="absolute -bottom-6 left-0 right-0 h-8 bg-gradient-to-b from-gray-800 to-transparent"></div>
           </div>
 
-          {/* Alarms Card */}
-          <div className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gradient-to-b from-gray-800 to-black p-5 shadow-2xl">
-            <div className="relative z-10">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-medium text-blue-300">Alarms</h2>
-                <div className="flex items-center">
-                  <div className="mr-3 text-sm text-gray-400">
-                    {nextAlarm
-                      ? (
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-1 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span>Next: {nextAlarm.time}, {timeUntilNextAlarm}</span>
-                        </div>
-                      )
-                      : (
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span>No alarms set</span>
-                        </div>
-                      )
-                    }
-                  </div>
-                  <button
-                    onClick={handleAddAlarm}
-                    className="group relative overflow-hidden rounded-full flex h-8 w-8 items-center justify-center bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg hover:shadow-blue-500/25">
-                    <span className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:translate-x-full group-hover:opacity-100"></span>
-                    <svg className="h-5 w-5 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
+          {/* Plant Visualization */}
+          <div className="flex justify-center -mb-4 -mt-8">
+            <Plant
+              health={authState.user?.plantHealth || 100}
+              level={authState.user?.plantLevel || 3}
+            />
+          </div>
 
-              {isLoading ? (
-                <div className="animate-pulse space-y-3">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex justify-between items-center p-3 rounded-lg bg-gray-800 bg-opacity-40">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-gray-700"></div>
-                        <div className="space-y-2">
-                          <div className="h-4 w-24 bg-gray-700 rounded"></div>
-                          <div className="h-3 w-32 bg-gray-700 rounded"></div>
+          {/* Connection Error Banner */}
+          <div className="mx-auto max-w-md">
+            <ConnectionErrorBanner />
+          </div>
+
+          {/* Main Content Cards */}
+          <div className="mx-auto max-w-md space-y-6">
+            {/* Weather Display Card */}
+            <div className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gradient-to-b from-gray-800 to-black p-5 shadow-2xl">
+              <div className="relative z-10">
+                {/* Current weather */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col">
+                    <div className="flex items-center">
+                      {weatherData && (
+                        <WeatherIcon
+                          condition={weatherData.current.weather[0].main}
+                          isNight={isNight}
+                          size="lg"
+                        />
+                      )}
+                      <span className="text-3xl font-bold ml-3">
+                        {weatherData ? `${Math.round(weatherData.current.temp)}°C` : '--°C'}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-300 mt-1">
+                      {weatherData ? weatherData.current.weather[0].description : 'Loading weather...'}
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-lg font-medium">Today</div>
+                    <div className="text-sm text-gray-300">{currentDate}</div>
+                    {weatherData && (
+                      <div className="flex mt-2 text-sm font-medium">
+                        <div className="flex items-center text-red-400">
+                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                          </svg>
+                          {`${Math.round(weatherData.current.temp_max)}°C`}
+                        </div>
+                        <div className="flex items-center text-blue-400 ml-3">
+                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                          {`${Math.round(weatherData.current.temp_min)}°C`}
                         </div>
                       </div>
-                      <div className="h-6 w-12 bg-gray-700 rounded"></div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-gray-700 my-4"></div>
+
+                {/* Hourly forecast */}
+                {weatherData ? (
+                  <div className="forecast-container">
+                    <h3 className="text-sm font-medium text-gray-400 mb-3">Hourly Forecast</h3>
+                    <div className="grid grid-cols-6 gap-2">
+                      {weatherData.forecast.map((item, index) => (
+                        <div key={index} className="forecast-item bg-gray-800 bg-opacity-40 rounded-lg p-2 flex flex-col items-center hover:bg-opacity-60 transition-colors">
+                          <span className="text-xs font-medium">{item.time}</span>
+                          <div className="my-2">
+                            <WeatherIcon condition={item.weather.main} isNight={isNight} size="sm" />
+                          </div>
+                          <span className="text-sm font-medium">{`${Math.round(item.temp)}°C`}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                ) : (
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-4 w-24 bg-gray-700 rounded"></div>
+                    <div className="grid grid-cols-6 gap-2">
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="flex flex-col items-center">
+                          <div className="h-3 w-10 bg-gray-700 rounded mb-2"></div>
+                          <div className="h-6 w-6 bg-gray-700 rounded-full mb-2"></div>
+                          <div className="h-3 w-8 bg-gray-700 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Alarms Card */}
+            <div className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gradient-to-b from-gray-800 to-black p-5 shadow-2xl">
+              <div className="relative z-10">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-medium text-blue-300">Alarms</h2>
+                  <div className="flex items-center">
+                    <div className="mr-3 text-sm text-gray-400">
+                      {nextAlarm
+                        ? (
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 mr-1 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Next: {nextAlarm.time}, {timeUntilNextAlarm}</span>
+                          </div>
+                        )
+                        : (
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>No alarms set</span>
+                          </div>
+                        )
+                      }
+                    </div>
+                    <button
+                      onClick={handleAddAlarm}
+                      className="group relative overflow-hidden rounded-full flex h-8 w-8 items-center justify-center bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg hover:shadow-blue-500/25">
+                      <span className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:translate-x-full group-hover:opacity-100"></span>
+                      <svg className="h-5 w-5 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              ) : alarms.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <svg className="w-12 h-12 mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-gray-400 text-center">No alarms created yet</p>
-                  <button
-                    onClick={handleAddAlarm}
-                    className="mt-4 group relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 py-2 px-4 text-white shadow-lg transition-all duration-300 hover:from-blue-500 hover:to-blue-600 hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-                  >
-                    <span className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:translate-x-full group-hover:opacity-100"></span>
-                    <span className="relative">Create Your First Alarm</span>
-                  </button>
-                </div>
-              ) : (
-                /* Alarm list */
-                <AlarmList
-                alarms={alarms}
-                onAlarmsChanged={handleAlarmModification}
-                weatherData={weatherData}
-                />
-              )}
+
+                {isLoading ? (
+                  <div className="animate-pulse space-y-3">
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="flex justify-between items-center p-3 rounded-lg bg-gray-800 bg-opacity-40">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 rounded-full bg-gray-700"></div>
+                          <div className="space-y-2">
+                            <div className="h-4 w-24 bg-gray-700 rounded"></div>
+                            <div className="h-3 w-32 bg-gray-700 rounded"></div>
+                          </div>
+                        </div>
+                        <div className="h-6 w-12 bg-gray-700 rounded"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : alarms.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <svg className="w-12 h-12 mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-gray-400 text-center">No alarms created yet</p>
+                    <button
+                      onClick={handleAddAlarm}
+                      className="mt-4 group relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 py-2 px-4 text-white shadow-lg transition-all duration-300 hover:from-blue-500 hover:to-blue-600 hover:shadow-blue-500/25 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                    >
+                      <span className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:translate-x-full group-hover:opacity-100"></span>
+                      <span className="relative">Create Your First Alarm</span>
+                    </button>
+                  </div>
+                ) : (
+                  /* Alarm list */
+                  <AlarmList
+                  alarms={alarms}
+                  onAlarmsChanged={handleAlarmModification}
+                  weatherData={weatherData}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -614,12 +617,12 @@ const AlarmDashboard: React.FC = () => {
       )}
       {activeAlarm && (
         <AlarmDisplay
-        alarm={activeAlarm}
-        audio={alarmAudio || undefined}
-        onDismiss={handleDismissAlarm}
-        weatherData={weatherData}
+          alarm={activeAlarm}
+          audio={alarmAudio || undefined}
+          onDismiss={handleDismissAlarm}
+          weatherData={weatherData}
         />
-    )}
+      )}
     </div>
   );
 };

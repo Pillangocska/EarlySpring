@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
 dotenv.config();
 
@@ -175,6 +176,138 @@ app.post('/api/deleteOne', async (req, res) => {
   }
 });
 
+// ============ TTS PROXY ENDPOINTS ============
+
+// Available TTS models
+const TTS_MODELS = {
+  // Basic MMS-TTS model (confirmed working)
+  'mms-tts': {
+    name: 'MMS-TTS Default',
+    process: async (text) => {
+      console.log('Using MMS-TTS model');
+
+      const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
+      if (!HUGGINGFACE_API_KEY) {
+        throw new Error('HuggingFace API key not configured');
+      }
+
+      const apiUrl = 'https://api-inference.huggingface.co/models/facebook/mms-tts-eng';
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inputs: text })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HuggingFace API error: ${response.statusText}`);
+      }
+
+      return {
+        buffer: await response.buffer(),
+        contentType: 'audio/mpeg'
+      };
+    }
+  },
+
+  // VITS female voice model (confirmed working)
+  'vits-female': {
+    name: 'VITS Female Voice',
+    process: async (text) => {
+      console.log('Using VITS Female model');
+
+      const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
+      if (!HUGGINGFACE_API_KEY) {
+        throw new Error('HuggingFace API key not configured');
+      }
+
+      const apiUrl = 'https://api-inference.huggingface.co/models/espnet/kan-bayashi_ljspeech_vits';
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inputs: text })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HuggingFace API error: ${response.statusText}`);
+      }
+
+      return {
+        buffer: await response.buffer(),
+        contentType: 'audio/mpeg'
+      };
+    }
+  }
+};
+
+// Set the model you want to use here
+const CURRENT_TTS_MODEL = 'vits-female';
+
+// Proxy endpoint for TTS API
+app.post('/api/tts-proxy', async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: 'Text input is required' });
+    }
+
+    // Get the selected model
+    const modelConfig = TTS_MODELS[CURRENT_TTS_MODEL] || TTS_MODELS['vits-female'];
+
+    console.log(`Using TTS model: ${modelConfig.name} for text: "${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"`);
+
+    try {
+      // Process the text with the selected model
+      const result = await modelConfig.process(text);
+
+      if (!result.buffer || result.buffer.length === 0) {
+        throw new Error('Empty audio response received');
+      }
+
+      // Set appropriate headers
+      res.set({
+        'Content-Type': result.contentType,
+        'Content-Length': result.buffer.length
+      });
+
+      // Send the audio data
+      res.send(result.buffer);
+    } catch (modelError) {
+      console.error(`Error with ${modelConfig.name}:`, modelError);
+
+      // Try fallback if the current model failed
+      if (CURRENT_TTS_MODEL !== 'vits-female') {
+        console.log('Falling back to VITS female voice...');
+        try {
+          const fallbackResult = await TTS_MODELS['vits-female'].process(text);
+
+          res.set({
+            'Content-Type': fallbackResult.contentType,
+            'Content-Length': fallbackResult.buffer.length
+          });
+
+          return res.send(fallbackResult.buffer);
+        } catch (fallbackError) {
+          console.error('Fallback to VITS failed:', fallbackError);
+          throw modelError; // Throw the original error
+        }
+      } else {
+        throw modelError;
+      }
+    }
+
+  } catch (error) {
+    console.error('TTS proxy error:', error);
+    res.status(500).json({ error: 'TTS proxy error: ' + error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -183,6 +316,8 @@ app.get('/api/health', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`TTS proxy available at http://localhost:${PORT}/api/tts-proxy`);
+  console.log(`Using TTS model: ${TTS_MODELS[CURRENT_TTS_MODEL].name}`);
 });
 
 // Handle graceful shutdown
