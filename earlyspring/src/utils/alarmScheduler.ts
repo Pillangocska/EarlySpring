@@ -70,10 +70,24 @@ const msUntil = (targetTime: Date): number => {
   return Math.max(0, targetTime.getTime() - new Date().getTime());
 };
 
+// Check if two alarms are effectively the same
+const areAlarmsEquivalent = (a: Alarm, b: Alarm): boolean => {
+  return a._id === b._id &&
+         a.time === b.time &&
+         a.isEnabled === b.isEnabled &&
+         JSON.stringify(a.days) === JSON.stringify(b.days);
+};
+
 // Schedule an alarm
 export const scheduleAlarm = (alarm: Alarm, weatherData?: WeatherData): void => {
   // Skip if alarm is not enabled
   if (!alarm.isEnabled) {
+    return;
+  }
+
+  // Skip if alarm doesn't have an ID
+  if (!alarm._id) {
+    console.warn('Cannot schedule alarm without an ID');
     return;
   }
 
@@ -85,11 +99,19 @@ export const scheduleAlarm = (alarm: Alarm, weatherData?: WeatherData): void => 
     return;
   }
 
-  // Check if this alarm is already scheduled
+  // Check if this alarm is already scheduled and unchanged
   const existingAlarmIndex = activeAlarms.findIndex(a => a.id === alarm._id);
   if (existingAlarmIndex !== -1) {
-    // Clear existing timer
-    clearTimeout(activeAlarms[existingAlarmIndex].timerId);
+    const existingAlarm = activeAlarms[existingAlarmIndex];
+
+    // If the alarm data and scheduled time are essentially the same, don't reschedule
+    if (areAlarmsEquivalent(existingAlarm.alarm, alarm) &&
+        existingAlarm.scheduledTime.getTime() === nextTime.getTime()) {
+      return;
+    }
+
+    // Otherwise, clear the existing timer as we'll reschedule
+    clearTimeout(existingAlarm.timerId);
     // Remove from active alarms
     activeAlarms.splice(existingAlarmIndex, 1);
   }
@@ -103,17 +125,24 @@ export const scheduleAlarm = (alarm: Alarm, weatherData?: WeatherData): void => 
   }, delay);
 
   // Add to active alarms list
-  if (alarm._id) {
-    activeAlarms.push({
-      id: alarm._id,
-      timerId,
-      alarm,
-      scheduledTime: nextTime
-    });
+  activeAlarms.push({
+    id: alarm._id,
+    timerId,
+    alarm,
+    scheduledTime: nextTime
+  });
 
-    console.log(`Alarm scheduled: ${alarm.label || 'Alarm'} at ${nextTime.toLocaleString()}`);
-  }
+  console.log(`Alarm scheduled: ${alarm.label || 'Alarm'} at ${nextTime.toLocaleString()}`);
 };
+
+export const cancelAlarm = (alarmId: string): void => {
+    const index = activeAlarms.findIndex(a => a.id === alarmId);
+    if (index !== -1) {
+      clearTimeout(activeAlarms[index].timerId);
+      activeAlarms.splice(index, 1);
+      console.log(`Alarm canceled: ${alarmId}`);
+    }
+  };
 
 // Trigger an alarm
 export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Promise<void> => {
@@ -172,7 +201,7 @@ export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Pro
       activeAlarms.splice(index, 1);
     }
 
-    // Schedule the next occurrence
+    // Schedule the next occurrence - this will only happen after the alarm has triggered
     scheduleAlarm(alarm, weatherData);
   }
 
@@ -290,9 +319,52 @@ export const cancelAllAlarms = (): void => {
   activeAlarms = [];
 };
 
+// Schedule all alarms (for initialization)
+export const scheduleAllAlarms = (alarms: Alarm[], weatherData?: WeatherData, forceReschedule: boolean = false): void => {
+    // Check if we need to reschedule
+    const alreadyScheduledIds = activeAlarms.map(a => a.id);
+    const enabledAlarms = alarms.filter(a => a.isEnabled);
+
+    // If there are already scheduled alarms and we're not forcing a reschedule,
+    // only schedule alarms that aren't already scheduled
+    if (activeAlarms.length > 0 && !forceReschedule) {
+      // Only schedule alarms that aren't already scheduled
+      enabledAlarms.forEach(alarm => {
+        if (alarm._id && !alreadyScheduledIds.includes(alarm._id)) {
+          scheduleAlarm(alarm, weatherData);
+        }
+      });
+
+      // Remove any alarms that are no longer in the list or disabled
+      const validAlarmIds = enabledAlarms.map(a => a._id).filter(id => id !== undefined) as string[];
+      activeAlarms.forEach(activeAlarm => {
+        if (!validAlarmIds.includes(activeAlarm.id)) {
+          clearTimeout(activeAlarm.timerId);
+        }
+      });
+
+      // Update activeAlarms to remove cancelled ones
+      activeAlarms = activeAlarms.filter(activeAlarm =>
+        validAlarmIds.includes(activeAlarm.id)
+      );
+    } else {
+      // First time or forced reschedule, cancel all and schedule fresh
+      cancelAllAlarms();
+
+      // Then schedule each enabled alarm
+      enabledAlarms.forEach(alarm => {
+        if (alarm._id) {
+          scheduleAlarm(alarm, weatherData);
+        }
+      });
+    }
+
+    console.log(`Scheduled ${activeAlarms.length} alarms`);
+  };
+
 // Get all currently scheduled alarms
 export const getScheduledAlarms = (): ActiveAlarm[] => {
-  return [...activeAlarms];
+    return [...activeAlarms];
 };
 
 // Calculate time remaining until an alarm goes off

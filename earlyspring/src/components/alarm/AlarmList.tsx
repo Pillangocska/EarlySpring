@@ -1,7 +1,7 @@
 // src/components/alarm/AlarmList.tsx
 
 import React, { useState } from 'react';
-import { Alarm } from '../../types';
+import { Alarm, WeatherData } from '../../types';
 import AlarmItem from './AlarmItem';
 import AlarmForm from './AlarmForm';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,9 +10,10 @@ import { createAlarm, updateAlarm } from '../../services/alarmService';
 interface AlarmListProps {
   alarms: Alarm[];
   onAlarmsChanged: () => void;
+  weatherData?: WeatherData; // Add weatherData prop
 }
 
-const AlarmList: React.FC<AlarmListProps> = ({ alarms, onAlarmsChanged }) => {
+const AlarmList: React.FC<AlarmListProps> = ({ alarms, onAlarmsChanged, weatherData }) => {
   const { authState } = useAuth();
   const [showAlarmForm, setShowAlarmForm] = useState<boolean>(false);
   const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
@@ -77,11 +78,12 @@ const AlarmList: React.FC<AlarmListProps> = ({ alarms, onAlarmsChanged }) => {
         <>
           {alarms.map(alarm => (
             <AlarmItem
-              key={alarm._id}
-              alarm={alarm}
-              onEdit={() => handleEditAlarm(alarm)}
-              onAlarmsChanged={onAlarmsChanged}
-            />
+            key={alarm._id}
+            alarm={alarm}
+            onEdit={() => handleEditAlarm(alarm)}
+            onAlarmsChanged={onAlarmsChanged}
+            weatherData={weatherData}
+          />
           ))}
 
           {/* Add new alarm button */}

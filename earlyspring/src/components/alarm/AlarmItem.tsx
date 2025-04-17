@@ -3,14 +3,16 @@
 import React, { useState } from 'react';
 import { Alarm, WeekDay } from '../../types';
 import { toggleAlarmStatus, deleteAlarm } from '../../services/alarmService';
+import { scheduleAlarm, getScheduledAlarms } from '../../utils/alarmScheduler';
 
 interface AlarmItemProps {
   alarm: Alarm;
   onEdit: () => void;
   onAlarmsChanged: () => void;
+  weatherData?: any; // Add weatherData prop
 }
 
-const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged }) => {
+const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, weatherData }) => {
   const [isEnabled, setIsEnabled] = useState<boolean>(alarm.isEnabled);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
@@ -41,8 +43,31 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged })
   const handleToggle = async () => {
     try {
       if (alarm._id) {
+        // Update the alarm status in the backend
         await toggleAlarmStatus(alarm._id, !isEnabled);
-        setIsEnabled(!isEnabled);
+
+        // Update local state
+        const newEnabledState = !isEnabled;
+        setIsEnabled(newEnabledState);
+
+        // Create an updated version of the alarm with the new status
+        const updatedAlarm = { ...alarm, isEnabled: newEnabledState };
+
+        // If enabling, schedule this specific alarm
+        if (newEnabledState) {
+          scheduleAlarm(updatedAlarm, weatherData);
+        } else {
+          // If disabling, cancel this specific alarm instead of all alarms
+          // Find and cancel just this one alarm
+          const activeAlarms = getScheduledAlarms();
+          const alarmToCancel = activeAlarms.find(a => a.id === alarm._id);
+          if (alarmToCancel) {
+            clearTimeout(alarmToCancel.timerId);
+            // This will be handled by the activeAlarms array management in scheduleAlarm
+          }
+        }
+
+        // Still call onAlarmsChanged to update the UI (but not reschedule all alarms)
         onAlarmsChanged();
       }
     } catch (error) {
@@ -50,11 +75,21 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged })
     }
   };
 
-  // Handle deleting the alarm
+  // In AlarmItem.tsx, update the handleDelete function
   const handleDelete = async () => {
     try {
       if (alarm._id) {
+        // Delete the alarm in the backend
         await deleteAlarm(alarm._id);
+
+        // Cancel this specific alarm's timer if it's active
+        const activeAlarms = getScheduledAlarms();
+        const alarmToCancel = activeAlarms.find(a => a.id === alarm._id);
+        if (alarmToCancel) {
+          clearTimeout(alarmToCancel.timerId);
+        }
+
+        // Notify parent component to refresh the alarm list (but not reschedule everything)
         onAlarmsChanged();
       }
     } catch (error) {

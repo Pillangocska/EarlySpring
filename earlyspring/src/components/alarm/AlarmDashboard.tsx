@@ -1,11 +1,11 @@
 // src/components/alarm/AlarmDashboard.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserAlarms, getNextAlarm, createAlarm, updateAlarm } from '../../services/alarmService';
 import { fetchWeatherData, isNighttime } from '../../services/weatherService';
 import { Alarm, WeatherData } from '../../types';
-import { scheduleAlarm, getTimeUntilAlarm } from '../../utils/alarmScheduler';
+import { getTimeUntilAlarm, scheduleAlarm, scheduleAllAlarms } from '../../utils/alarmScheduler';
 import { requestNotificationPermission } from '../../utils/notifications';
 
 import AlarmList from './AlarmList';
@@ -25,6 +25,7 @@ const AlarmDashboard: React.FC = () => {
   const [showAlarmForm, setShowAlarmForm] = useState<boolean>(false);
   const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
   const [isNight, setIsNight] = useState<boolean>(isNighttime());
+  const initialLoad = useRef(true);
 
   // Load user's alarms
   useEffect(() => {
@@ -114,12 +115,12 @@ const AlarmDashboard: React.FC = () => {
   useEffect(() => {
     if (!authState.isAuthenticated || alarms.length === 0) return;
 
-    // Schedule all enabled alarms
-    alarms.forEach(alarm => {
-      if (alarm.isEnabled) {
-        scheduleAlarm(alarm, weatherData || undefined);
-      }
-    });
+    // Use the component-level initialLoad ref
+    if (initialLoad.current) {
+      // First load, schedule everything
+      scheduleAllAlarms(alarms, weatherData || undefined);
+      initialLoad.current = false;
+    }
 
     // Calculate time until next alarm
     const updateTimeUntilAlarm = () => {
@@ -128,12 +129,10 @@ const AlarmDashboard: React.FC = () => {
         const alarmHour = parseInt(alarmTime[0]);
         const alarmMinute = parseInt(alarmTime[1]);
 
-        // Find the next occurrence of this alarm
         const now = new Date();
         const targetTime = new Date();
         targetTime.setHours(alarmHour, alarmMinute, 0, 0);
 
-        // If the alarm time is in the past for today, set it for tomorrow
         if (targetTime < now) {
           targetTime.setDate(targetTime.getDate() + 1);
         }
@@ -145,12 +144,18 @@ const AlarmDashboard: React.FC = () => {
     };
 
     updateTimeUntilAlarm();
-
-    // Update the countdown every minute
     const intervalId = setInterval(updateTimeUntilAlarm, 60000);
 
     return () => clearInterval(intervalId);
-  }, [authState.isAuthenticated, alarms, nextAlarm, weatherData]);
+  }, [authState.isAuthenticated, nextAlarm, alarms]);
+
+  // Add a new useEffect specifically for scheduling alarms on initial load
+  useEffect(() => {
+    if (!authState.isAuthenticated || alarms.length === 0) return;
+
+    // Only schedule all alarms on initial load or when alarms array changes
+    scheduleAllAlarms(alarms, weatherData || undefined);
+  }, [authState.isAuthenticated, alarms.length]); // Only depend on authState and alarms.length
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -160,7 +165,7 @@ const AlarmDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      // Fetch alarms
+      // Fetch alarms without rescheduling them
       try {
         const userAlarms = await getUserAlarms(authState.user._id!);
         setAlarms(userAlarms);
@@ -188,6 +193,45 @@ const AlarmDashboard: React.FC = () => {
     }
   };
 
+  const handleAlarmModification = async (modifiedAlarm: Alarm) => {
+    // Only refresh the alarms list, don't reschedule
+    if (!authState.user?._id) return;
+
+    try {
+      const userAlarms = await getUserAlarms(authState.user._id!);
+      setAlarms(userAlarms);
+
+      // Get the next alarm
+      const next = await getNextAlarm(authState.user._id!);
+      setNextAlarm(next);
+    } catch (error) {
+      console.error('Error refreshing after alarm modification:', error);
+    }
+  };
+
+
+  // Then create a separate function for refreshing all alarms:
+  const refreshAllAlarms = async () => {
+    if (!authState.isAuthenticated || !authState.user) return;
+
+    try {
+      setIsLoading(true);
+      const userAlarms = await getUserAlarms(authState.user._id!);
+      setAlarms(userAlarms);
+
+      // Schedule all alarms only on full refresh
+      scheduleAllAlarms(userAlarms, weatherData || undefined);
+
+      // Get the next alarm
+      const next = await getNextAlarm(authState.user._id!);
+      setNextAlarm(next);
+    } catch (error) {
+      console.error('Error refreshing all alarms:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle opening the alarm form modal
   const handleAddAlarm = () => {
     setEditingAlarm(null);
@@ -205,9 +249,11 @@ const AlarmDashboard: React.FC = () => {
     if (!authState.user?._id) return;
 
     try {
+      let savedAlarm;
+
       if (editingAlarm && editingAlarm._id) {
         // Update existing alarm
-        await updateAlarm(
+        savedAlarm = await updateAlarm(
           editingAlarm._id,
           {
             ...alarmData,
@@ -216,7 +262,7 @@ const AlarmDashboard: React.FC = () => {
         );
       } else {
         // Create new alarm
-        await createAlarm({
+        savedAlarm = await createAlarm({
           ...alarmData,
           userId: authState.user._id
         });
@@ -224,7 +270,19 @@ const AlarmDashboard: React.FC = () => {
 
       setShowAlarmForm(false);
       setEditingAlarm(null);
-      handleRefresh(); // Refresh alarms to show the updated list
+
+      // Get fresh alarms data
+      const userAlarms = await getUserAlarms(authState.user._id!);
+      setAlarms(userAlarms);
+
+      // Update next alarm
+      const next = await getNextAlarm(authState.user._id!);
+      setNextAlarm(next);
+
+      // Schedule only the new/updated alarm
+      if (savedAlarm && savedAlarm.isEnabled) {
+        scheduleAlarm(savedAlarm, weatherData || undefined);
+      }
     } catch (error) {
       console.error('Error saving alarm:', error);
     }
@@ -505,8 +563,9 @@ const AlarmDashboard: React.FC = () => {
               ) : (
                 /* Alarm list */
                 <AlarmList
-                  alarms={alarms}
-                  onAlarmsChanged={handleRefresh}
+                alarms={alarms}
+                onAlarmsChanged={handleAlarmModification}
+                weatherData={weatherData}
                 />
               )}
             </div>
