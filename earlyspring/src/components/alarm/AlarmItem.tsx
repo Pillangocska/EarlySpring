@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { Alarm, WeekDay } from '../../types';
 import { toggleAlarmStatus, deleteAlarm } from '../../services/alarmService';
-import { scheduleAlarm, getScheduledAlarms } from '../../utils/alarmScheduler';
+import { scheduleAlarm, cancelAlarm, triggerAlarm } from '../../utils/alarmScheduler';
 
 interface AlarmItemProps {
   alarm: Alarm;
   onEdit: () => void;
   onAlarmsChanged: () => void;
-  weatherData?: any; // Add weatherData prop
+  weatherData?: any;
 }
 
 const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, weatherData }) => {
@@ -54,20 +54,14 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, w
         const updatedAlarm = { ...alarm, isEnabled: newEnabledState };
 
         // If enabling, schedule this specific alarm
+        // If disabling, cancel this specific alarm
         if (newEnabledState) {
           scheduleAlarm(updatedAlarm, weatherData);
-        } else {
-          // If disabling, cancel this specific alarm instead of all alarms
-          // Find and cancel just this one alarm
-          const activeAlarms = getScheduledAlarms();
-          const alarmToCancel = activeAlarms.find(a => a.id === alarm._id);
-          if (alarmToCancel) {
-            clearTimeout(alarmToCancel.timerId);
-            // This will be handled by the activeAlarms array management in scheduleAlarm
-          }
+        } else if (alarm._id) {
+          cancelAlarm(alarm._id);
         }
 
-        // Still call onAlarmsChanged to update the UI (but not reschedule all alarms)
+        // Notify parent component about the change
         onAlarmsChanged();
       }
     } catch (error) {
@@ -75,21 +69,34 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, w
     }
   };
 
-  // In AlarmItem.tsx, update the handleDelete function
+  // Handle manually triggering an alarm for testing
+  const handleTriggerAlarm = async () => {
+    if (alarm._id) {
+      try {
+        // Clone the alarm and mark it as manually triggered to avoid rescheduling
+        const manualAlarm = { ...alarm, _manuallyTriggered: true };
+
+        // The AlarmDisplay will be shown via the global callback in AlarmDashboard
+        triggerAlarm(manualAlarm, weatherData);
+      } catch (error) {
+        console.error('Error triggering alarm manually:', error);
+      }
+    }
+  };
+
+  // Handle deleting the alarm
   const handleDelete = async () => {
     try {
       if (alarm._id) {
         // Delete the alarm in the backend
         await deleteAlarm(alarm._id);
 
-        // Cancel this specific alarm's timer if it's active
-        const activeAlarms = getScheduledAlarms();
-        const alarmToCancel = activeAlarms.find(a => a.id === alarm._id);
-        if (alarmToCancel) {
-          clearTimeout(alarmToCancel.timerId);
+        // Cancel this alarm if it's scheduled
+        if (alarm._id) {
+          cancelAlarm(alarm._id);
         }
 
-        // Notify parent component to refresh the alarm list (but not reschedule everything)
+        // Notify parent component to refresh the alarm list
         onAlarmsChanged();
       }
     } catch (error) {
@@ -159,14 +166,28 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, w
               <button
                 onClick={onEdit}
                 className="text-gray-400 hover:text-white transition-colors"
+                title="Edit alarm"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
               </button>
+
+              {/* Test alarm button */}
+              <button
+                onClick={handleTriggerAlarm}
+                className="text-gray-400 hover:text-blue-500 transition-colors"
+                title="Test alarm"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </button>
+
               <button
                 onClick={handleDeleteClick}
                 className="text-gray-400 hover:text-red-500 transition-colors"
+                title="Delete alarm"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

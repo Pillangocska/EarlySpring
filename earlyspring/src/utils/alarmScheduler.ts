@@ -14,6 +14,12 @@ interface ActiveAlarm {
 }
 
 let activeAlarms: ActiveAlarm[] = [];
+let alarmDisplayCallback: ((alarm: Alarm, audio: HTMLAudioElement) => void) | null = null;
+
+// Register alarm display callback - to be called by AlarmDashboard
+export const registerAlarmDisplayCallback = (callback: (alarm: Alarm, audio: HTMLAudioElement) => void) => {
+  alarmDisplayCallback = callback;
+};
 
 // Check if a day is today
 const isToday = (day: WeekDay): boolean => {
@@ -135,79 +141,117 @@ export const scheduleAlarm = (alarm: Alarm, weatherData?: WeatherData): void => 
   console.log(`Alarm scheduled: ${alarm.label || 'Alarm'} at ${nextTime.toLocaleString()}`);
 };
 
+// Cancel a specific alarm
 export const cancelAlarm = (alarmId: string): void => {
-    const index = activeAlarms.findIndex(a => a.id === alarmId);
-    if (index !== -1) {
-      clearTimeout(activeAlarms[index].timerId);
-      activeAlarms.splice(index, 1);
-      console.log(`Alarm canceled: ${alarmId}`);
-    }
-  };
+  const index = activeAlarms.findIndex(a => a.id === alarmId);
+  if (index !== -1) {
+    clearTimeout(activeAlarms[index].timerId);
+    activeAlarms.splice(index, 1);
+    console.log(`Alarm canceled: ${alarmId}`);
+  }
+};
 
 // Trigger an alarm
-export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Promise<void> => {
-  // Prepare weather text if needed
-  let weatherText;
-  if (alarm.weatherAlert && weatherData) {
-    weatherText = formatWeatherForSpeech(weatherData);
-  }
-
-  // Play alarm sound
-  const audio = new Audio();
-  if (alarm.sound) {
-    audio.src = `/sounds/${alarm.sound}.mp3`;
-  } else {
-    audio.src = '/sounds/baby_waltz.mp3'; // Default
-  }
-
-  if (alarm.vibrate) {
-    // Check if vibration API is available
-    if ('vibrate' in navigator) {
-      // Vibrate pattern: vibrate for 500ms, pause for 250ms, repeat
-      navigator.vibrate([500, 250, 500, 250, 500]);
+export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Promise<HTMLAudioElement> => {
+    // Prepare weather text if needed
+    let weatherText;
+    if (alarm.weatherAlert && weatherData) {
+      weatherText = formatWeatherForSpeech(weatherData);
     }
-  }
 
-  // Handle volume
-  if (alarm.raiseVolumeGradually) {
-    audio.volume = 0.1;
-    let vol = 0.1;
-    const volumeInterval = setInterval(() => {
-      vol += 0.1;
-      if (vol <= 1) {
-        audio.volume = vol;
+    // Play alarm sound
+    const audio = new Audio();
+
+    try {
+      // Set source with error handling
+      if (alarm.sound) {
+        audio.src = `./sounds/${alarm.sound}.mp3`;
+        console.log(`Loading sound from: ./sounds/${alarm.sound}.mp3`);
       } else {
-        clearInterval(volumeInterval);
+        audio.src = './sounds/baby_waltz.mp3';
+        console.log('Loading default sound: ./sounds/baby_waltz.mp3');
       }
-    }, 3000); // Increase volume every 3 seconds
-  } else {
-    audio.volume = 1.0;
-  }
 
-  // Set to loop
-  audio.loop = true;
-  await audio.play();
+      // Keep a simple fallback in case of errors
+      audio.onerror = () => {
+        console.warn(`Could not load sound: ${audio.src}, trying fallback`);
+        audio.src = './sounds/baby_waltz.mp3';
 
-  // Display notification
-  showAlarmNotification(alarm);
+        // If even the fallback fails, just continue without sound
+        audio.onerror = () => {
+          console.warn("Even fallback sound failed to load");
+        };
+      };
 
-  // Use TTS to announce alarm
-  await speakAlarmNotification(alarm.label, !!alarm.weatherAlert, weatherText);
+      if (alarm.vibrate) {
+        // Check if vibration API is available
+        if ('vibrate' in navigator) {
+          // Vibrate pattern: vibrate for 500ms, pause for 250ms, repeat
+          navigator.vibrate([500, 250, 500, 250, 500]);
+        }
+      }
 
-  // Remove from active alarms
-  if (alarm._id) {
-    const index = activeAlarms.findIndex(a => a.id === alarm._id);
-    if (index !== -1) {
-      activeAlarms.splice(index, 1);
+      // Handle volume
+      if (alarm.raiseVolumeGradually) {
+        audio.volume = 0.1;
+        let vol = 0.1;
+        const volumeInterval = setInterval(() => {
+          vol += 0.1;
+          if (vol <= 1) {
+            audio.volume = vol;
+          } else {
+            clearInterval(volumeInterval);
+          }
+        }, 3000); // Increase volume every 3 seconds
+      } else {
+        audio.volume = 1.0;
+      }
+
+      // Set to loop
+      audio.loop = true;
+
+      // Try to play the audio, but don't let errors stop the alarm display
+      try {
+        await audio.play();
+      } catch (error) {
+        console.warn("Could not play alarm sound:", error);
+        // Continue with the alarm even if sound fails
+      }
+
+    } catch (error) {
+      console.error("Error setting up alarm audio:", error);
+      // Don't let audio errors prevent the alarm from displaying
     }
 
-    // Schedule the next occurrence - this will only happen after the alarm has triggered
-    scheduleAlarm(alarm, weatherData);
-  }
+    // Display notification
+    showAlarmNotification(alarm);
 
-  // Return the audio element so it can be stopped when the alarm is dismissed
-  return audio;
-};
+    // Use TTS to announce alarm
+    try {
+      await speakAlarmNotification(alarm.label, !!alarm.weatherAlert, weatherText);
+    } catch (error) {
+      console.warn("Could not use text-to-speech:", error);
+    }
+
+    // If this was a real scheduled alarm (not manually triggered), update scheduling
+    if (alarm._id && !alarm._manuallyTriggered) {
+      const index = activeAlarms.findIndex(a => a.id === alarm._id);
+      if (index !== -1) {
+        activeAlarms.splice(index, 1);
+      }
+
+      // Schedule the next occurrence - this will only happen after the alarm has triggered
+      scheduleAlarm(alarm, weatherData);
+    }
+
+    // IMPORTANT: Always call the alarm display callback regardless of whether it's manual or automatic
+    if (alarmDisplayCallback) {
+      alarmDisplayCallback(alarm, audio);
+    }
+
+    // Return the audio element so it can be stopped when the alarm is dismissed
+    return audio;
+  };
 
 // Show a browser notification for the alarm
 export const showAlarmNotification = (alarm: Alarm): void => {
@@ -320,51 +364,21 @@ export const cancelAllAlarms = (): void => {
 };
 
 // Schedule all alarms (for initialization)
-export const scheduleAllAlarms = (alarms: Alarm[], weatherData?: WeatherData, forceReschedule: boolean = false): void => {
-    // Check if we need to reschedule
-    const alreadyScheduledIds = activeAlarms.map(a => a.id);
-    const enabledAlarms = alarms.filter(a => a.isEnabled);
+export const scheduleAllAlarms = (alarms: Alarm[], weatherData?: WeatherData): void => {
+  // First cancel all existing alarms
+  cancelAllAlarms();
 
-    // If there are already scheduled alarms and we're not forcing a reschedule,
-    // only schedule alarms that aren't already scheduled
-    if (activeAlarms.length > 0 && !forceReschedule) {
-      // Only schedule alarms that aren't already scheduled
-      enabledAlarms.forEach(alarm => {
-        if (alarm._id && !alreadyScheduledIds.includes(alarm._id)) {
-          scheduleAlarm(alarm, weatherData);
-        }
-      });
-
-      // Remove any alarms that are no longer in the list or disabled
-      const validAlarmIds = enabledAlarms.map(a => a._id).filter(id => id !== undefined) as string[];
-      activeAlarms.forEach(activeAlarm => {
-        if (!validAlarmIds.includes(activeAlarm.id)) {
-          clearTimeout(activeAlarm.timerId);
-        }
-      });
-
-      // Update activeAlarms to remove cancelled ones
-      activeAlarms = activeAlarms.filter(activeAlarm =>
-        validAlarmIds.includes(activeAlarm.id)
-      );
-    } else {
-      // First time or forced reschedule, cancel all and schedule fresh
-      cancelAllAlarms();
-
-      // Then schedule each enabled alarm
-      enabledAlarms.forEach(alarm => {
-        if (alarm._id) {
-          scheduleAlarm(alarm, weatherData);
-        }
-      });
+  // Then schedule each enabled alarm
+  alarms.forEach(alarm => {
+    if (alarm.isEnabled) {
+      scheduleAlarm(alarm, weatherData);
     }
-
-    console.log(`Scheduled ${activeAlarms.length} alarms`);
-  };
+  });
+};
 
 // Get all currently scheduled alarms
 export const getScheduledAlarms = (): ActiveAlarm[] => {
-    return [...activeAlarms];
+  return [...activeAlarms];
 };
 
 // Calculate time remaining until an alarm goes off

@@ -5,8 +5,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getUserAlarms, getNextAlarm, createAlarm, updateAlarm } from '../../services/alarmService';
 import { fetchWeatherData, isNighttime } from '../../services/weatherService';
 import { Alarm, WeatherData } from '../../types';
-import { getTimeUntilAlarm, scheduleAlarm, scheduleAllAlarms } from '../../utils/alarmScheduler';
+import { getTimeUntilAlarm, scheduleAlarm, scheduleAllAlarms, registerAlarmDisplayCallback } from '../../utils/alarmScheduler';
 import { requestNotificationPermission } from '../../utils/notifications';
+import AlarmDisplay from './AlarmDisplay';
 
 import AlarmList from './AlarmList';
 import AlarmForm from './AlarmForm';
@@ -26,6 +27,8 @@ const AlarmDashboard: React.FC = () => {
   const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
   const [isNight, setIsNight] = useState<boolean>(isNighttime());
   const initialLoad = useRef(true);
+  const [activeAlarm, setActiveAlarm] = useState<Alarm | null>(null);
+  const [alarmAudio, setAlarmAudio] = useState<HTMLAudioElement | null>(null);
 
   // Load user's alarms
   useEffect(() => {
@@ -109,6 +112,16 @@ const AlarmDashboard: React.FC = () => {
     const intervalId = setInterval(updateClock, 1000);
 
     return () => clearInterval(intervalId);
+  }, []);
+
+  // Register the callback function to show the alarm display
+  useEffect(() => {
+    registerAlarmDisplayCallback((alarm: Alarm, audio: HTMLAudioElement) => {
+      setActiveAlarm(alarm);
+      setAlarmAudio(audio);
+    });
+
+    // No cleanup needed as this is a global registration
   }, []);
 
   // Schedule alarms and update time until next alarm
@@ -236,6 +249,19 @@ const AlarmDashboard: React.FC = () => {
   const handleAddAlarm = () => {
     setEditingAlarm(null);
     setShowAlarmForm(true);
+  };
+
+  const handleDismissAlarm = () => {
+    if (alarmAudio) {
+      try {
+        alarmAudio.pause();
+        alarmAudio.currentTime = 0;
+      } catch (error) {
+        console.warn("Error stopping alarm audio:", error);
+      }
+    }
+    setAlarmAudio(null);
+    setActiveAlarm(null);
   };
 
   // Handle closing the alarm form modal
@@ -585,6 +611,14 @@ const AlarmDashboard: React.FC = () => {
           </div>
         </div>
       )}
+      {activeAlarm && (
+        <AlarmDisplay
+        alarm={activeAlarm}
+        audio={alarmAudio || undefined}
+        onDismiss={handleDismissAlarm}
+        weatherData={weatherData}
+        />
+    )}
     </div>
   );
 };
