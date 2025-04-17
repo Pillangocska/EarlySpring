@@ -408,7 +408,7 @@ const AlarmDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-gray-800 to-black px-4 py-8 text-white">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-800 to-black px-4 text-white">
       {/* Subtle glow effect */}
       <div className="absolute -top-20 left-1/2 h-40 w-80 -translate-x-1/2 transform rounded-full bg-green-500 opacity-10 blur-3xl"></div>
       <div className="absolute top-1/2 left-1/3 h-40 w-80 -translate-x-1/2 transform rounded-full bg-blue-500 opacity-10 blur-3xl"></div>
@@ -416,13 +416,14 @@ const AlarmDashboard: React.FC = () => {
       {/* Content with relative positioning for z-index */}
       <div className="relative z-10">
         {/* App Header with Logo/Title */}
-        <div className="pt-8 pb-8 text-center">
+        <div className="pt-5 pb-7 text-center">
           <h1 className="text-5xl font-bold text-green-300">EarlySpring</h1>
           <p className="text-gray-400 mt-2">{currentTime} • {currentDate}</p>
+          <div className="absolute -bottom-6 left-0 right-0 h-8 bg-gradient-to-b from-gray-800 to-transparent"></div>
         </div>
 
         {/* Plant Visualization */}
-        <div className="mb-8 flex justify-center">
+        <div className="flex justify-center -mb-4 -mt-8">
           <Plant
             // TODO just for testing
             //health={60}

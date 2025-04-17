@@ -76,7 +76,6 @@ export interface User {
   export interface PlantState {
     health: number; // 0-100
     level: number; // 1-5
-    status: 'thriving' | 'healthy' | 'struggling' | 'dying';
   }
 
   export const DEFAULT_ALARM: AlarmFormData = {

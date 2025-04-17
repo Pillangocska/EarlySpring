@@ -2,7 +2,7 @@
 
 import { Alarm, WeatherData, WeekDay } from '../types';
 import { speakAlarmNotification } from '../services/ttsService';
-import { formatWeatherForSpeech, shouldAlertWeather } from '../services/weatherService';
+import { formatWeatherForSpeech } from '../services/weatherService';
 import { updatePlantHealth } from '../services/userService';
 
 // Store active alarms to manage them globally
@@ -163,23 +163,35 @@ export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Pro
     const audio = new Audio();
 
     try {
-      // Set source with error handling
+      // Set source with error handling - use correct path with leading slash
       if (alarm.sound) {
-        audio.src = `./sounds/${alarm.sound}.mp3`;
-        console.log(`Loading sound from: ./sounds/${alarm.sound}.mp3`);
+        audio.src = `/public/sounds/${alarm.sound}.mp3`;
+        console.log(`Loading sound from: /public/sounds/${alarm.sound}.mp3`);
       } else {
-        audio.src = './sounds/baby_waltz.mp3';
-        console.log('Loading default sound: ./sounds/baby_waltz.mp3');
+        audio.src = '/public/sounds/baby_waltz.mp3';
+        console.log('Loading default sound: /public/sounds/baby_waltz.mp3');
       }
 
       // Keep a simple fallback in case of errors
       audio.onerror = () => {
         console.warn(`Could not load sound: ${audio.src}, trying fallback`);
-        audio.src = './sounds/baby_waltz.mp3';
+        audio.src = '/sounds/baby_waltz.mp3';
 
-        // If even the fallback fails, just continue without sound
+        // If even the fallback fails, use a system beep sound as last resort
         audio.onerror = () => {
-          console.warn("Even fallback sound failed to load");
+          console.warn("Even fallback sound failed to load, using system beep");
+          // Create a simple oscillator as a last resort
+          try {
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.connect(audioContext.destination);
+            oscillator.start();
+            setTimeout(() => oscillator.stop(), 1000);
+          } catch (e) {
+            console.error("Could not create fallback beep sound:", e);
+          }
         };
       };
 
@@ -212,7 +224,20 @@ export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Pro
 
       // Try to play the audio, but don't let errors stop the alarm display
       try {
-        await audio.play();
+        // We need to make sure the audio is ready before playing
+        audio.addEventListener('canplaythrough', () => {
+          audio.play().catch(error => {
+            console.warn("Could not play alarm sound:", error);
+            // This might happen due to browser autoplay restrictions
+          });
+        }, { once: true });
+
+        // Set a timeout in case the event never fires
+        setTimeout(() => {
+          audio.play().catch(error => {
+            console.warn("Timeout: Could not play alarm sound:", error);
+          });
+        }, 1000);
       } catch (error) {
         console.warn("Could not play alarm sound:", error);
         // Continue with the alarm even if sound fails

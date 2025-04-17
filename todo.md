@@ -1,7 +1,9 @@
 alarmot majd kozos stylera hozni es rendbe rakni
 TTS?
-ezt kigyomlalni: status: 'thriving' | 'healthy' | 'struggling' | 'dying';
-# Direkt bugok?
+
 - a noveny vazaja ronda inkabb takarja ki az aljat a weather comp
 - felulet felso gombja kek helyett legyen az egyseges zold meg a alarms felirat is
 - edit alarmnal az ora nem olyan mint figmanal
+- kozepso fa szine neon zold ronda
+- alarm cardon kell az a sok faszsag mint pl a vibrate vagy gradual volume?
+- 2s lehet sok a fa tooltipjehez?
