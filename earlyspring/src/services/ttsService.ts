@@ -4,7 +4,19 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 const TTS_PROXY_ENDPOINT = `${API_BASE_URL}/tts-proxy`;
 
-// Fallback to browser's built-in TTS if HuggingFace fails
+// TTS mode control - set to true to use browser TTS, false to try API first
+// TODO dont forget this!
+let USE_BROWSER_TTS = true;
+
+// Browser voice settings
+const BROWSER_VOICE_SETTINGS = {
+  preferFemale: true, // Try to use a female voice if available
+  language: 'en-US',  // Voice language
+  rate: 1.0,          // Speed (1.0 is normal)
+  pitch: 1.1,         // Pitch (1.0 is normal, higher for female voices)
+};
+
+// Use browser's built-in TTS
 const useBrowserTTS = (text: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     // Check if SpeechSynthesis is supported
@@ -13,26 +25,69 @@ const useBrowserTTS = (text: string): Promise<void> => {
       return;
     }
 
+    console.log('Using browser TTS');
+
     // Create utterance
     const utterance = new SpeechSynthesisUtterance(text);
 
     // Set language to English
-    utterance.lang = 'en-US';
+    utterance.lang = BROWSER_VOICE_SETTINGS.language;
 
-    // Optional: adjust voice, rate, pitch
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    // Try to use a female voice if preferred
+    if (BROWSER_VOICE_SETTINGS.preferFemale) {
+      try {
+        const voices = window.speechSynthesis.getVoices();
+
+        // Look for a suitable voice
+        let selectedVoice = null;
+
+        // First try to find a female voice
+        if (BROWSER_VOICE_SETTINGS.preferFemale) {
+          selectedVoice = voices.find(
+            voice => voice.lang.includes(BROWSER_VOICE_SETTINGS.language.split('-')[0]) &&
+                    (voice.name.includes('Female') || voice.name.includes('female'))
+          );
+        }
+
+        // If no female voice found, try to find any voice in the right language
+        if (!selectedVoice) {
+          selectedVoice = voices.find(
+            voice => voice.lang.includes(BROWSER_VOICE_SETTINGS.language.split('-')[0])
+          );
+        }
+
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          console.log(`Selected voice: ${selectedVoice.name}`);
+        } else {
+          console.log('No specific voice found, using default');
+        }
+      } catch (e) {
+        console.warn('Error setting voice:', e);
+      }
+    }
+
+    // Apply rate and pitch settings
+    utterance.rate = BROWSER_VOICE_SETTINGS.rate;
+    utterance.pitch = BROWSER_VOICE_SETTINGS.pitch;
 
     // Set callbacks
-    utterance.onend = () => resolve();
-    utterance.onerror = (event) => reject(new Error(`Speech synthesis error: ${event.error}`));
+    utterance.onend = () => {
+      console.log('Browser TTS finished speaking');
+      resolve();
+    };
+    utterance.onerror = (event) => {
+      console.error('Browser TTS error:', event);
+      reject(new Error(`Speech synthesis error: ${event.error}`));
+    };
 
     // Speak
+    console.log('Starting browser TTS...');
     window.speechSynthesis.speak(utterance);
   });
 };
 
-// Use proxy server to make request to HuggingFace
+// Use proxy server to make request to TTS API
 const useProxyTTS = async (text: string): Promise<ArrayBuffer> => {
   try {
     console.log('Using backend proxy for TTS request');
@@ -95,16 +150,44 @@ const playAudio = (audioData: ArrayBuffer): Promise<void> => {
   });
 };
 
-// Main TTS function with fallback
+// Set TTS mode
+export const setTTSMode = (useBrowser: boolean): void => {
+  USE_BROWSER_TTS = useBrowser;
+  console.log(`TTS mode set to: ${useBrowser ? 'Browser' : 'API'}`);
+};
+
+// Get current TTS mode
+export const getTTSMode = (): boolean => {
+  return USE_BROWSER_TTS;
+};
+
+// Configure browser voice settings
+export const configureBrowserVoice = (settings: Partial<typeof BROWSER_VOICE_SETTINGS>): void => {
+  Object.assign(BROWSER_VOICE_SETTINGS, settings);
+  console.log('Browser voice settings updated:', BROWSER_VOICE_SETTINGS);
+};
+
+// Main TTS function with mode selection
 export const speakText = async (text: string): Promise<void> => {
   try {
-    // Try proxy-based TTS
-    const audioData = await useProxyTTS(text);
-    await playAudio(audioData);
+    console.log('TTS request for text:', text);
+
+    // Check if we should use browser TTS directly
+    if (USE_BROWSER_TTS) {
+      await useBrowserTTS(text);
+      return;
+    }
+
+    // Otherwise try API first, then fallback to browser
+    try {
+      const audioData = await useProxyTTS(text);
+      await playAudio(audioData);
+    } catch (error) {
+      console.warn('TTS API error, falling back to browser TTS:', error);
+      await useBrowserTTS(text);
+    }
   } catch (error) {
-    console.warn('TTS error, falling back to browser TTS:', error);
-    // Fallback to browser TTS
-    await useBrowserTTS(text);
+    console.error('TTS error:', error);
   }
 };
 
