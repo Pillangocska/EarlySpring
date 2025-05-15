@@ -1,0 +1,16 @@
+FROM node:slim
+
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package.json /app
+RUN npm install
+
+# Copy application code
+COPY . /app
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Wait for MongoDB to be ready before starting
+CMD ["node", "server.js"]

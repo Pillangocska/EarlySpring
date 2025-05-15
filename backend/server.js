@@ -18,7 +18,7 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://host.docker.internal:27017';
 const DB_NAME = process.env.MONGO_DB_NAME || 'earlyspring';
 let client = null;
 
