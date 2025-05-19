@@ -527,13 +527,13 @@ const AlarmDashboard: React.FC = () => {
             <div className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gradient-to-b from-gray-800 to-black p-5 shadow-2xl">
               <div className="relative z-10">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-medium text-blue-300">Alarms</h2>
+                  <h2 className="text-xl font-medium text-green-300">Alarms</h2>
                   <div className="flex items-center">
                     <div className="mr-3 text-sm text-gray-400">
                       {nextAlarm
                         ? (
                           <div className="flex items-center">
-                            <svg className="w-4 h-4 mr-1 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 mr-1 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>Next: {nextAlarm.time}, {timeUntilNextAlarm}</span>
@@ -551,7 +551,7 @@ const AlarmDashboard: React.FC = () => {
                     </div>
                     <button
                       onClick={handleAddAlarm}
-                      className="group relative overflow-hidden rounded-full flex h-8 w-8 items-center justify-center bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg hover:shadow-blue-500/25">
+                      className="group relative overflow-hidden rounded-full flex h-8 w-8 items-center justify-center bg-gradient-to-r from-green-600 to-green-500 text-white hover:from-green-500 hover:to-green-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg hover:shadow-blue-500/25">
                       <span className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:translate-x-full group-hover:opacity-100"></span>
                       <svg className="h-5 w-5 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

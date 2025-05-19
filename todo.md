@@ -1,7 +1,6 @@
 - Nincs “nincs szundi” opció.
 - A növény alakját esetleg lehetne változtatni (konkrét igény: bonsai).
 - A növény cserepe nem esztétikus.
-- felulet felso gombja kek helyett legyen az egyseges zold meg a alarms felirat is
 - Az ébresztő beállítása képernyőn nem egyezik meg az idő választó a Figma prototípussal.
 - Az egyik fa grafika élénk színe nem illik az esztétikába.
 - A növény növekedési logikája talán további finomhangolásra szorul.
