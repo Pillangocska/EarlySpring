@@ -180,7 +180,7 @@ app.post('/api/deleteOne', async (req, res) => {
 
 // Available TTS models
 const TTS_MODELS = {
-  // Basic MMS-TTS model (confirmed working)
+  // Basic MMS-TTS model
   'mms-tts': {
     name: 'MMS-TTS Default',
     process: async (text) => {
@@ -202,7 +202,10 @@ const TTS_MODELS = {
       });
 
       if (!response.ok) {
-        throw new Error(`HuggingFace API error: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`HuggingFace API error (${response.status}): ${response.statusText}`);
+        console.error(`Error details: ${errorText}`);
+        throw new Error(`HuggingFace API error (${response.status}): ${response.statusText} - ${errorText}`);
       }
 
       return {
@@ -212,7 +215,7 @@ const TTS_MODELS = {
     }
   },
 
-  // VITS female voice model (confirmed working)
+  // VITS female voice model
   'vits-female': {
     name: 'VITS Female Voice',
     process: async (text) => {
@@ -234,7 +237,10 @@ const TTS_MODELS = {
       });
 
       if (!response.ok) {
-        throw new Error(`HuggingFace API error: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`HuggingFace API error (${response.status}): ${response.statusText}`);
+        console.error(`Error details: ${errorText}`);
+        throw new Error(`HuggingFace API error (${response.status}): ${response.statusText} - ${errorText}`);
       }
 
       return {
@@ -245,8 +251,8 @@ const TTS_MODELS = {
   }
 };
 
-// Set the model you want to use here
-const CURRENT_TTS_MODEL = 'vits-female';
+// Change the default model to something more reliable
+const CURRENT_TTS_MODEL = 'microsoft-speecht5';
 
 // Proxy endpoint for TTS API
 app.post('/api/tts-proxy', async (req, res) => {

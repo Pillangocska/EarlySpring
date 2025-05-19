@@ -1,8 +1,8 @@
-- a noveny vazaja ronda inkabb takarja ki az aljat a weather comp
+- Nincs “nincs szundi” opció.
+- A növény alakját esetleg lehetne változtatni (konkrét igény: bonsai).
+- A növény cserepe nem esztétikus.
 - felulet felso gombja kek helyett legyen az egyseges zold meg a alarms felirat is
-- edit alarmnal az ora nem olyan mint figmanal
-- kozepso fa szine neon zold ronda
-- alarm cardon kell az a sok faszsag mint pl a vibrate vagy gradual volume?
-- 2s lehet sok a fa tooltipjehez?
-- alarm logika biztosan jo?
-- alarmnal lehet jobban elkene helyezni a fat
+- Az ébresztő beállítása képernyőn nem egyezik meg az idő választó a Figma prototípussal.
+- Az egyik fa grafika élénk színe nem illik az esztétikába.
+- A növény növekedési logikája talán további finomhangolásra szorul.
+- Az időjárás mindig éjféltől indul, és nem az adott órától.

@@ -251,12 +251,17 @@ export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Pro
     // Display notification
     showAlarmNotification(alarm);
 
-    // Use TTS to announce alarm
-    try {
-      await speakAlarmNotification(alarm.label, !!alarm.weatherAlert, weatherText);
-    } catch (error) {
-      console.warn("Could not use text-to-speech:", error);
+    // IMPORTANT CHANGE: Call the alarm display callback BEFORE speech synthesis
+    // so UI appears immediately
+    if (alarmDisplayCallback) {
+      alarmDisplayCallback(alarm, audio);
     }
+
+    // Use TTS to announce alarm - don't await this, let it run in parallel
+    speakAlarmNotification(alarm.label, !!alarm.weatherAlert, weatherText)
+      .catch(error => {
+        console.warn("Could not use text-to-speech:", error);
+      });
 
     // If this was a real scheduled alarm (not manually triggered), update scheduling
     if (alarm._id && !alarm._manuallyTriggered) {
@@ -269,14 +274,9 @@ export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Pro
       scheduleAlarm(alarm, weatherData);
     }
 
-    // IMPORTANT: Always call the alarm display callback regardless of whether it's manual or automatic
-    if (alarmDisplayCallback) {
-      alarmDisplayCallback(alarm, audio);
-    }
-
     // Return the audio element so it can be stopped when the alarm is dismissed
     return audio;
-  };
+};
 
 // Show a browser notification for the alarm
 export const showAlarmNotification = (alarm: Alarm): void => {
