@@ -44,8 +44,31 @@ const Plant: React.FC<PlantProps> = ({ health, level }) => {
   const plantColors = useMemo(() => {
     let foliageColor: string;
     let trunkColor: string;
-    const potColor = '#4B5563'; // gray-600
-    const soilColor = '#92400E'; // yellow-800
+
+    // Enhanced pot colors with multiple options for variety
+    const potGradients = [
+      // Gradient 1: Elegant dark ceramic look with blue accent
+      {
+        main: ['#1F2937', '#111827'], // dark blue-gray gradient
+        accent: '#3B82F6', // blue accent
+        highlight: 'rgba(59, 130, 246, 0.5)' // blue highlight
+      },
+      // Gradient 2: Modern dark with green accent
+      {
+        main: ['#1F2937', '#111827'], // dark blue-gray gradient
+        accent: '#10B981', // emerald accent
+        highlight: 'rgba(16, 185, 129, 0.5)' // emerald highlight
+      },
+      // Gradient 3: Modern dark with purple accent
+      {
+        main: ['#1F2937', '#111827'], // dark blue-gray gradient
+        accent: '#8B5CF6', // violet accent
+        highlight: 'rgba(139, 92, 246, 0.5)' // violet highlight
+      }
+    ];
+
+    // Always use the green accent style (looks best)
+    const potStyle = potGradients[1]; // Green accent
 
     if (health < 25) {
       foliageColor = '#CA8A04'; // yellow-600
@@ -61,8 +84,12 @@ const Plant: React.FC<PlantProps> = ({ health, level }) => {
       trunkColor = '#166534';   // green-800
     }
 
-    return { foliageColor, trunkColor, potColor, soilColor };
-  }, [health]);
+    return {
+      foliageColor,
+      trunkColor,
+      potStyle
+    };
+  }, [health, clampedLevel]);
 
   // Generate tree structure using recursive algorithm
   const { branches, leaves } = useMemo(() => {
@@ -71,7 +98,7 @@ const Plant: React.FC<PlantProps> = ({ health, level }) => {
 
     // Starting point of the trunk
     const startX = 150;
-    const startY = 240;
+    const startY = 240; // Start exactly at the pot rim
     const initialAngle = -Math.PI / 2; // Pointing up
 
     // Tree parameters based on level
@@ -386,9 +413,19 @@ const Plant: React.FC<PlantProps> = ({ health, level }) => {
       onContextMenu={handleContextMenu}
     >
       <svg viewBox="0 0 300 300" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-        {/* Pot */}
-        <path d="M110 240 L190 240 L200 280 L100 280 Z" fill={plantColors.potColor} />
-        <ellipse cx="150" cy="240" rx="40" ry="10" fill={plantColors.soilColor} />
+        <defs>
+          {/* Gradient for pot */}
+          <linearGradient id="potGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={plantColors.potStyle.main[0]} />
+            <stop offset="100%" stopColor={plantColors.potStyle.main[1]} />
+          </linearGradient>
+
+          {/* Filter for pot glow */}
+          <filter id="potGlow">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
 
         {/* Draw tree branches */}
         {branches.map((branch, index) => (
@@ -422,6 +459,66 @@ const Plant: React.FC<PlantProps> = ({ health, level }) => {
             />
           </g>
         ))}
+
+        {/* Base Reflection/Shadow */}
+        <ellipse
+          cx="150"
+          cy="282"
+          rx="55"
+          ry="8"
+          fill="rgba(0,0,0,0.2)"
+          filter="blur(2px)"
+        />
+
+        {/* Pot - drawn LAST to be on top of plant */}
+        <g className="pot">
+          {/* Main pot body */}
+          <path
+            d="M105 242
+               C105 242, 110 240, 150 240
+               C190 240, 195 242, 195 242
+               L205 280
+               C205 285, 200 287, 150 287
+               C100 287, 95 285, 95 280 Z"
+            fill="url(#potGradient)"
+            filter="url(#potGlow)"
+          />
+
+          {/* Pot rim/lip with accent color */}
+          <path
+            d="M105 242
+               C105 242, 110 240, 150 240
+               C190 240, 195 242, 195 242
+               L190 248
+               C190 248, 170 246, 150 246
+               C130 246, 110 248, 110 248 Z"
+            fill={plantColors.potStyle.accent}
+            opacity="0.9"
+          />
+
+          {/* Decorative accent line */}
+          <path
+            d="M110 260
+               C110 260, 130 258, 150 258
+               C170 258, 190 260, 190 260"
+            stroke={plantColors.potStyle.accent}
+            strokeWidth="1"
+            fill="none"
+            opacity="0.5"
+          />
+
+          {/* Highlight on pot (light reflection) */}
+          <path
+            d="M115 250
+               Q125 252, 130 270
+               Q132 280, 135 282"
+            stroke={plantColors.potStyle.highlight}
+            strokeWidth="3"
+            fill="none"
+            opacity="0.3"
+            strokeLinecap="round"
+          />
+        </g>
 
         {/* Touch indicator that appears during long touch */}
         {isMobile && touchDuration > 0 && touchDuration < 1000 && (

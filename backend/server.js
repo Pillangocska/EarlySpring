@@ -323,7 +323,6 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`TTS proxy available at http://localhost:${PORT}/api/tts-proxy`);
-  console.log(`Using TTS model: ${TTS_MODELS[CURRENT_TTS_MODEL].name}`);
 });
 
 // Handle graceful shutdown

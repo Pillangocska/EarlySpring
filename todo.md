@@ -1,7 +1,7 @@
 - Nincs “nincs szundi” opció.
 - A növény alakját esetleg lehetne változtatni (konkrét igény: bonsai).
-- A növény cserepe nem esztétikus.
 - Az ébresztő beállítása képernyőn nem egyezik meg az idő választó a Figma prototípussal.
 - Az egyik fa grafika élénk színe nem illik az esztétikába.
 - A növény növekedési logikája talán további finomhangolásra szorul.
 - Az időjárás mindig éjféltől indul, és nem az adott órától.
+- README iras/befejezes
