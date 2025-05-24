@@ -43,7 +43,8 @@ const Plant: React.FC<PlantProps> = ({ health, level }) => {
   // Generate colors based on plant health
   const plantColors = useMemo(() => {
     let foliageColor: string;
-    let trunkColor: string;
+    // Trunk is always brown regardless of health
+    const trunkColor = '#8B4513'; // Saddle brown
 
     // Enhanced pot colors with multiple options for variety
     const potGradients = [
@@ -72,16 +73,12 @@ const Plant: React.FC<PlantProps> = ({ health, level }) => {
 
     if (health < 25) {
       foliageColor = '#CA8A04'; // yellow-600
-      trunkColor = '#854D0E';   // yellow-800
     } else if (health < 50) {
       foliageColor = '#FDE047'; // yellow-300
-      trunkColor = '#A16207';   // yellow-700
     } else if (health > 75) {
       foliageColor = '#22C55E'; // green-500
-      trunkColor = '#14532D';   // green-900
     } else {
       foliageColor = '#4ADE80'; // green-400
-      trunkColor = '#166534';   // green-800
     }
 
     return {
