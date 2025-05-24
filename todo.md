@@ -1,7 +1,4 @@
-- Nincs “nincs szundi” opció.
-- A növény alakját esetleg lehetne változtatni (konkrét igény: bonsai).
-- Az ébresztő beállítása képernyőn nem egyezik meg az idő választó a Figma prototípussal.
-- Az egyik fa grafika élénk színe nem illik az esztétikába.
-- A növény növekedési logikája talán további finomhangolásra szorul.
-- Az időjárás mindig éjféltől indul, és nem az adott órától.
-- README iras/befejezes
+- Nincs “nincs szundi” opció. M
+- Az ébresztő beállítása képernyőn nem egyezik meg az idő választó a Figma prototípussal. M
+- Az időjárás mindig éjféltől indul, és nem az adott órától. M
+- README iras/befejezes M/B
