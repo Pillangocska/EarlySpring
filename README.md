@@ -48,6 +48,23 @@ A React-based alarm clock application with MongoDB, Google OAuth, TTS and Open-M
 
     ```
 
+3. Using Docker
+    ```bash
+    # Install docker on your computer
+    # https://docs.docker.com/desktop/install/windows-install/
+    
+    # Create a mongo container
+    docker pull mongodb/mongodb-community-server:latest
+    
+    # Run a mongo container
+    docker run --name mongodb -p 27017:27017 -d mongodb/mongodb-community-server:latest
+    
+    # Start the application
+    docker compose up -d
+    ```
+
+
+
 # TODO innentol
 ### Environment Variables
 
