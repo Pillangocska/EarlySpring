@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -10,13 +8,14 @@ services:
     volumes:
       - ./earlyspring/src:/app/src
       - ./earlyspring/public:/app/public
+      - /app/node_modules
     environment:
       - VITE_API_URL=http://localhost:3000
     depends_on:
       - backend
 
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
@@ -26,10 +25,20 @@ services:
       - /app/node_modules
     environment:
       - PORT=3000
-      - MONGO_URI=${MONGO_URI}
-      - MONGO_DB_NAME=${MONGO_DB_NAME}
+      - MONGO_URI=${MONGO_URI:-mongodb://mongodb:27017/earlyspring}
+      - MONGO_DB_NAME=${MONGO_DB_NAME:-earlyspring}
       - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
       - FRONTEND_URL=http://localhost:5173
-    external_links:
-      - mongodb:mongodb
+    depends_on:
+      - mongodb
     restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
