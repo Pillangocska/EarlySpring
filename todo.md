@@ -1,4 +1,3 @@
-- Nincs “nincs szundi” opció. M
-- Az ébresztő beállítása képernyőn nem egyezik meg az idő választó a Figma prototípussal. M
-- Az időjárás mindig éjféltől indul, és nem az adott órától. M
-- README iras/befejezes M/B
+- Nincs “nincs szundi” opció. Marci
+- Az ébresztő beállítása képernyőn nem egyezik meg az idő választó a Figma prototípussal. Marci
+- Az időjárás mindig éjféltől indul, és nem az adott órától. Marci
