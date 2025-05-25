@@ -248,13 +248,17 @@ export const triggerAlarm = async (alarm: Alarm, weatherData?: WeatherData): Pro
       // Don't let audio errors prevent the alarm from displaying
     }
 
-    // Display notification
-    showAlarmNotification(alarm);
-
-    // IMPORTANT CHANGE: Call the alarm display callback BEFORE speech synthesis
-    // so UI appears immediately
+    // IMPORTANT: Call the alarm display callback FIRST so UI appears immediately
+    // even if notification fails
     if (alarmDisplayCallback) {
       alarmDisplayCallback(alarm, audio);
+    }
+
+    // Display notification (but don't let it block the UI)
+    try {
+      showAlarmNotification(alarm);
+    } catch (error) {
+      console.warn("Could not show notification:", error);
     }
 
     // Use TTS to announce alarm - don't await this, let it run in parallel
@@ -296,25 +300,26 @@ export const showAlarmNotification = (alarm: Alarm): void => {
 
 // Create the actual notification
 const createNotification = (alarm: Alarm): void => {
-  const title = alarm.label || 'Alarm';
-  const options = {
-    body: `It's ${alarm.time}! Time to wake up!`,
-    icon: '/icons/alarm-icon.png',
-    badge: '/icons/alarm-badge.png',
-    requireInteraction: true, // Notification persists until user interacts with it
-    actions: [
-      { action: 'snooze', title: 'Snooze' },
-      { action: 'dismiss', title: 'Dismiss' }
-    ]
-  };
+  try {
+    const title = alarm.label || 'Alarm';
+    const options: NotificationOptions = {
+      body: `It's ${alarm.time}! Time to wake up!`,
+      icon: '/icons/alarm-icon.png',
+      badge: '/icons/alarm-badge.png',
+      requireInteraction: true // Notification persists until user interacts with it
+      // Note: Actions are NOT supported for regular notifications, only for service worker notifications
+    };
 
-  const notification = new Notification(title, options);
+    const notification = new Notification(title, options);
 
-  notification.onclick = (event) => {
-    // Focus on app window
-    window.focus();
-    notification.close();
-  };
+    notification.onclick = (event) => {
+      // Focus on app window
+      window.focus();
+      notification.close();
+    };
+  } catch (error) {
+    console.warn("Could not create notification:", error);
+  }
 };
 
 // Snooze an alarm
@@ -351,7 +356,11 @@ export const snoozeAlarm = async (
   }
 
   // Update plant health for snoozing (negative effect)
-  await updatePlantHealth(userId, -5);
+  try {
+    await updatePlantHealth(userId, -5);
+  } catch (error) {
+    console.warn("Could not update plant health:", error);
+  }
 
   // Schedule the snoozed alarm
   scheduleAlarm(snoozeAlarm);
@@ -362,20 +371,25 @@ export const dismissAlarm = async (
   alarm: Alarm,
   userId: string,
   didWakeUp: boolean,
-  audio?: HTMLAudioElement
+  audio?: HTMLAudioElement,
+  immediateDismiss: boolean = true
 ): Promise<void> => {
   // Stop the current alarm sound
-  if (audio) {
+  if (audio && immediateDismiss) {
     audio.pause();
     audio.currentTime = 0;
   }
 
-  if (didWakeUp) {
-    // Positive effect on plant if user woke up without snoozing
-    await updatePlantHealth(userId, 10);
-  } else {
-    // Negative effect if user dismissed without waking up
-    await updatePlantHealth(userId, -10);
+  try {
+    if (didWakeUp) {
+      // Positive effect on plant if user woke up without snoozing
+      await updatePlantHealth(userId, 10);
+    } else {
+      // Negative effect if user dismissed without waking up
+      await updatePlantHealth(userId, -10);
+    }
+  } catch (error) {
+    console.warn("Could not update plant health:", error);
   }
 };
 
