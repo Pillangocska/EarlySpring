@@ -214,6 +214,11 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, w
                   📈 Gradual volume
                 </span>
               )}
+              {alarm.isSnoozeEnabled && (
+                <span className="mr-2">
+                  💤 Snooze
+                </span>
+              )}
             </div>
           )}
         </>

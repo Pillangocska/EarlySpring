@@ -15,6 +15,9 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ existingAlarm, onSave, onClose })
   const [label, setLabel] = useState<string>(existingAlarm?.label || '');
   const [days, setDays] = useState<WeekDay[]>(existingAlarm?.days || DEFAULT_ALARM.days);
   const [sound, setSound] = useState<string>(existingAlarm?.sound || (ALARM_SOUNDS[0].id));
+  const [isSnoozeEnabled, setIsSnoozeEnabled] = useState<boolean>(
+    existingAlarm?.isSnoozeEnabled !== undefined ? existingAlarm.isSnoozeEnabled : DEFAULT_ALARM.isSnoozeEnabled
+  );
   const [vibrate, setVibrate] = useState<boolean>(
     existingAlarm?.vibrate !== undefined ? existingAlarm.vibrate : DEFAULT_ALARM.vibrate
   );
@@ -58,6 +61,7 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ existingAlarm, onSave, onClose })
         sound,
         vibrate,
         raiseVolumeGradually,
+        isSnoozeEnabled,
         snoozeTime,
         snoozeBehavior,
         weatherAlert,
@@ -72,53 +76,47 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ existingAlarm, onSave, onClose })
       <button
         type="button"
         onClick={() => setDays(['Mon', 'Tue', 'Wed', 'Thu', 'Fri'])}
-        className={`relative overflow-hidden px-3 py-1 text-sm rounded-full font-medium transition-all duration-300 ${
-          days.length === 5 &&
+        className={`relative overflow-hidden px-3 py-1 text-sm rounded-full font-medium transition-all duration-300 ${days.length === 5 &&
           days.includes('Mon') && days.includes('Tue') &&
           days.includes('Wed') && days.includes('Thu') &&
           days.includes('Fri')
-            ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg hover:shadow-green-500/25'
-            : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
-        }`}
+          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg hover:shadow-green-500/25'
+          : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
+          }`}
       >
-        <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${
-          days.length === 5 &&
+        <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${days.length === 5 &&
           days.includes('Mon') && days.includes('Tue') &&
           days.includes('Wed') && days.includes('Thu') &&
           days.includes('Fri') ? 'group-hover:translate-x-full group-hover:opacity-100' : ''
-        }`}></span>
+          }`}></span>
         <span className="relative">Weekdays</span>
       </button>
 
       <button
         type="button"
         onClick={() => setDays(['Sat', 'Sun'])}
-        className={`relative overflow-hidden px-3 py-1 text-sm rounded-full font-medium transition-all duration-300 ${
-          days.length === 2 &&
+        className={`relative overflow-hidden px-3 py-1 text-sm rounded-full font-medium transition-all duration-300 ${days.length === 2 &&
           days.includes('Sat') && days.includes('Sun')
-            ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg hover:shadow-green-500/25'
-            : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
-        }`}
+          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg hover:shadow-green-500/25'
+          : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
+          }`}
       >
-        <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${
-          days.length === 2 &&
+        <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${days.length === 2 &&
           days.includes('Sat') && days.includes('Sun') ? 'group-hover:translate-x-full group-hover:opacity-100' : ''
-        }`}></span>
+          }`}></span>
         <span className="relative">Weekends</span>
       </button>
 
       <button
         type="button"
         onClick={() => setDays(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])}
-        className={`relative overflow-hidden px-3 py-1 text-sm rounded-full font-medium transition-all duration-300 ${
-          days.length === 7
-            ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg hover:shadow-green-500/25'
-            : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
-        }`}
+        className={`relative overflow-hidden px-3 py-1 text-sm rounded-full font-medium transition-all duration-300 ${days.length === 7
+          ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg hover:shadow-green-500/25'
+          : 'bg-gray-900 text-gray-300 hover:bg-gray-800'
+          }`}
       >
-        <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${
-          days.length === 7 ? 'group-hover:translate-x-full group-hover:opacity-100' : ''
-        }`}></span>
+        <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${days.length === 7 ? 'group-hover:translate-x-full group-hover:opacity-100' : ''
+          }`}></span>
         <span className="relative">Everyday</span>
       </button>
     </div>
@@ -182,15 +180,13 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ existingAlarm, onSave, onClose })
                   key={day}
                   type="button"
                   onClick={() => toggleDay(day)}
-                  className={`relative overflow-hidden py-2 rounded-lg text-center transition-all duration-300 ${
-                    days.includes(day)
-                      ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-md hover:shadow-green-500/25'
-                      : 'bg-gray-900 bg-opacity-40 text-gray-400 hover:bg-opacity-60 border border-gray-700'
-                  }`}
+                  className={`relative overflow-hidden py-2 rounded-lg text-center transition-all duration-300 ${days.includes(day)
+                    ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-md hover:shadow-green-500/25'
+                    : 'bg-gray-900 bg-opacity-40 text-gray-400 hover:bg-opacity-60 border border-gray-700'
+                    }`}
                 >
-                  <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${
-                    days.includes(day) ? 'group-hover:translate-x-full group-hover:opacity-100' : ''
-                  }`}></span>
+                  <span className={`absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-300 ${days.includes(day) ? 'group-hover:translate-x-full group-hover:opacity-100' : ''
+                    }`}></span>
                   <span className="relative">{day}</span>
                 </button>
               ))}
@@ -246,35 +242,49 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ existingAlarm, onSave, onClose })
 
           {/* Snooze settings */}
           <div className="mb-6 bg-gray-900 bg-opacity-30 rounded-lg border border-gray-700 p-4">
-            <h3 className="text-sm font-medium text-green-300 mb-3">Snooze</h3>
-
-            <div className="mb-3">
-              <label className="block text-white mb-2">Duration</label>
-              <select
-                value={snoozeTime}
-                onChange={(e) => setSnoozeTime(parseInt(e.target.value))}
-                className="w-full bg-gray-900 bg-opacity-40 text-white py-2 px-4 rounded-lg border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none transition-colors shadow-inner"
-              >
-                <option value={5}>5 mins</option>
-                <option value={10}>10 mins</option>
-                <option value={15}>15 mins</option>
-                <option value={20}>20 mins</option>
-                <option value={30}>30 mins</option>
-              </select>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-medium text-green-300">Snooze</h3>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={isSnoozeEnabled}
+                  onChange={(e) => setIsSnoozeEnabled(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-green-500 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+              </label>
             </div>
 
-            <div>
-              <label className="block text-white mb-2">Behaviour</label>
-              <select
-                value={snoozeBehavior}
-                onChange={(e) => setSnoozeBehavior(e.target.value as 'repeat' | 'repeat_shorten' | 'once')}
-                className="w-full bg-gray-900 bg-opacity-40 text-white py-2 px-4 rounded-lg border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none transition-colors shadow-inner"
-              >
-                <option value="repeat">Repeat</option>
-                <option value="repeat_shorten">Repeat, shorten</option>
-                <option value="once">Once only</option>
-              </select>
-            </div>
+            {isSnoozeEnabled &&
+              <>
+                <div className="mb-3">
+                  <label className="block text-white mb-2">Duration</label>
+                  <select
+                    value={snoozeTime}
+                    onChange={(e) => setSnoozeTime(parseInt(e.target.value))}
+                    className="w-full bg-gray-900 bg-opacity-40 text-white py-2 px-4 rounded-lg border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none transition-colors shadow-inner"
+                  >
+                    <option value={5}>5 mins</option>
+                    <option value={10}>10 mins</option>
+                    <option value={15}>15 mins</option>
+                    <option value={20}>20 mins</option>
+                    <option value={30}>30 mins</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-white mb-2">Behaviour</label>
+                  <select
+                    value={snoozeBehavior}
+                    onChange={(e) => setSnoozeBehavior(e.target.value as 'repeat' | 'repeat_shorten' | 'once')}
+                    className="w-full bg-gray-900 bg-opacity-40 text-white py-2 px-4 rounded-lg border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none transition-colors shadow-inner"
+                  >
+                    <option value="repeat">Repeat</option>
+                    <option value="repeat_shorten">Repeat, shorten</option>
+                    <option value="once">Once only</option>
+                  </select>
+                </div>
+              </>}
           </div>
 
           {/* Weather alert */}

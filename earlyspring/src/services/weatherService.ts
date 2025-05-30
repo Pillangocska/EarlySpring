@@ -79,7 +79,7 @@ export const fetchWeatherData = async (): Promise<WeatherData> => {
       `&current=temperature_2m,relative_humidity_2m,weather_code` +
       `&hourly=temperature_2m,weather_code` +
       `&daily=temperature_2m_max,temperature_2m_min` +
-      `&timezone=auto&forecast_days=1`
+      `&timezone=auto&forecast_days=2`
     );
 
     if (!response.ok) {
@@ -98,10 +98,11 @@ export const fetchWeatherData = async (): Promise<WeatherData> => {
 
     // Process hourly forecast for the next 18 hours (6 items at 3-hour intervals)
     const forecast = [];
-    for (let i = 1; i <= 6; i++) {
+    const currentHour = new Date().getHours();
+    for (let i = 0; i <= 5; i++) {
       const index = i * 3; // Every 3 hours
-      if (data.hourly.time[index]) {
-        const date = new Date(data.hourly.time[index]);
+      if (data.hourly.time[currentHour+index]) {
+        const date = new Date(data.hourly.time[currentHour+index]);
         forecast.push({
           time: `${date.getHours().toString().padStart(2, '0')}:00`,
           temp: data.hourly.temperature_2m[index],

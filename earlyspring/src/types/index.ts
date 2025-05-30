@@ -22,6 +22,7 @@ export interface User {
     sound?: string;
     vibrate?: boolean;
     raiseVolumeGradually?: boolean;
+    isSnoozeEnabled?: boolean;
     snoozeTime?: number; // in minutes
     snoozeBehavior?: 'repeat' | 'repeat_shorten' | 'once';
     weatherAlert?: boolean;
@@ -69,6 +70,7 @@ export interface User {
     sound?: string;
     vibrate: boolean;
     raiseVolumeGradually: boolean;
+    isSnoozeEnabled: boolean;
     snoozeTime: number;
     snoozeBehavior: 'repeat' | 'repeat_shorten' | 'once';
   }
@@ -83,6 +85,7 @@ export interface User {
     days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
     vibrate: true,
     raiseVolumeGradually: true,
+    isSnoozeEnabled: true,
     snoozeTime: 10,
     snoozeBehavior: 'repeat_shorten',
   }

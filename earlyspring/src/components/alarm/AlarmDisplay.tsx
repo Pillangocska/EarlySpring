@@ -340,12 +340,12 @@ const AlarmDisplay: React.FC<AlarmDisplayProps> = ({
 
                {/* Regular Actions */}
                 <div className="grid grid-cols-2 gap-4">
-                    <button
+                    {alarm.isSnoozeEnabled && <button
                         onClick={handleSnooze} // Snooze keeps the alarm scheduled later
                         className="bg-gradient-to-r from-amber-700 to-amber-600 text-white py-4 px-2 rounded-xl font-medium shadow-md hover:from-amber-600 hover:to-amber-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-gray-900"
                     >
                          Snooze
-                    </button>
+                    </button>}
                     <button
                         onClick={handleWakeUp}
                         className="bg-gradient-to-r from-green-700 to-green-600 text-white py-4 px-2 rounded-xl font-medium shadow-md hover:from-green-600 hover:to-green-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900"
