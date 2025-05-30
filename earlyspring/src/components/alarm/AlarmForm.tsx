@@ -1,6 +1,6 @@
 // src/components/alarm/AlarmForm.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Alarm, WeekDay, DEFAULT_ALARM, ALARM_SOUNDS } from '../../types';
 
 interface AlarmFormProps {
@@ -8,6 +8,186 @@ interface AlarmFormProps {
   onSave: (alarmData: Omit<Alarm, '_id' | 'userId'>) => void;
   onClose: () => void;
 }
+
+// iPhone-style Time Picker Component (24-hour format)
+const IPhoneTimePicker = ({ value, onChange, className = "" }) => {
+  // Parse 24-hour time
+  const parseTime = (time24) => {
+    if (!time24) return { hours: 6, minutes: 0 };
+    const [hours, minutes] = time24.split(':').map(Number);
+    return { hours, minutes };
+  };
+
+  const { hours: initialHours, minutes: initialMinutes } = parseTime(value);
+
+  const [selectedHours, setSelectedHours] = useState(initialHours);
+  const [selectedMinutes, setSelectedMinutes] = useState(initialMinutes);
+
+  // Generate arrays for the picker
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+
+  // Update parent component when values change
+  useEffect(() => {
+    const newTime = `${selectedHours.toString().padStart(2, '0')}:${selectedMinutes.toString().padStart(2, '0')}`;
+    onChange(newTime);
+  }, [selectedHours, selectedMinutes, onChange]);
+
+  // Column Component with simplified approach
+  const PickerColumn = ({ values, selectedValue, setValue, formatter = (v) => v, label }) => {
+    const columnRef = useRef(null);
+    const itemHeight = 40;
+    const visibleItems = 5; // Reduced from 7 to make it less tall
+    const centerIndex = Math.floor(visibleItems / 2); // Index 3 will be the center
+
+    // Handle wheel scroll
+    const handleWheel = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const delta = e.deltaY > 0 ? 1 : -1;
+      const currentIndex = values.indexOf(selectedValue);
+      let newIndex = currentIndex + delta;
+
+      // Handle wrap-around
+      if (newIndex < 0) {
+        newIndex = values.length - 1;
+      } else if (newIndex >= values.length) {
+        newIndex = 0;
+      }
+
+      setValue(values[newIndex]);
+    };
+
+    // Add event listener for wheel
+    useEffect(() => {
+      const element = columnRef.current;
+      if (element) {
+        element.addEventListener('wheel', handleWheel, { passive: false });
+        return () => {
+          element.removeEventListener('wheel', handleWheel);
+        };
+      }
+    }, [selectedValue]);
+
+    // Generate items to display centered around selected value
+    const getDisplayItems = () => {
+      const selectedIndex = values.indexOf(selectedValue);
+      const items = [];
+
+      for (let i = -centerIndex; i <= centerIndex; i++) {
+        let index = selectedIndex + i;
+
+        // Handle wrap-around for display
+        if (index < 0) {
+          index = values.length + index;
+        } else if (index >= values.length) {
+          index = index - values.length;
+        }
+
+        items.push({
+          value: values[index],
+          position: i,
+          isSelected: i === 0
+        });
+      }
+
+      return items;
+    };
+
+    const displayItems = getDisplayItems();
+
+    return (
+      <div className="w-20">
+        <div className="text-center text-xs text-gray-500 mb-2">{label}</div>
+        <div
+          ref={columnRef}
+          className="relative overflow-hidden cursor-pointer"
+          style={{ height: `${visibleItems * itemHeight}px` }}
+        >
+          {/* Gradient overlays for fade effect */}
+          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-gray-900 to-transparent z-20 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-900 to-transparent z-20 pointer-events-none"></div>
+
+          {/* Items container with 3D perspective */}
+          <div
+            className="flex flex-col relative"
+            style={{
+              transformStyle: 'preserve-3d',
+              perspective: '1000px'
+            }}
+          >
+            {displayItems.map((item, index) => {
+              const distance = Math.abs(item.position);
+              const opacity = Math.max(0.3, 1 - distance * 0.2);
+              const scale = item.isSelected ? 1.1 : Math.max(0.9, 1 - distance * 0.05);
+
+              // 3D cylinder effect - rotate items based on their position
+              const rotationAngle = item.position * 15; // 15 degrees per step
+              const translateZ = Math.cos(rotationAngle * Math.PI / 180) * 20; // Push back items that are rotated
+              const translateY = Math.sin(rotationAngle * Math.PI / 180) * -8; // Slight vertical offset
+
+              return (
+                <div
+                  key={`${item.value}-${index}`}
+                  onClick={() => setValue(item.value)}
+                  className={`
+                    cursor-pointer text-center transition-all duration-200 font-medium select-none relative
+                    ${item.isSelected
+                      ? 'text-green-400 text-lg font-semibold'
+                      : 'text-gray-400 hover:text-gray-200 text-base'
+                    }
+                  `}
+                  style={{
+                    height: `${itemHeight}px`,
+                    lineHeight: `${itemHeight}px`,
+                    opacity,
+                    transform: `
+                      scale(${scale})
+                      rotateX(${rotationAngle}deg)
+                      translateZ(${translateZ}px)
+                      translateY(${translateY}px)
+                    `,
+                    transformStyle: 'preserve-3d',
+                  }}
+                >
+                  {formatter(item.value)}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={`bg-gray-900 bg-opacity-40 rounded-lg border border-gray-700 focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-500 transition-colors shadow-inner ${className}`}>
+      <div className="flex items-center justify-center space-x-2 p-4">
+        {/* Hours column */}
+        <PickerColumn
+          values={hours}
+          selectedValue={selectedHours}
+          setValue={setSelectedHours}
+          formatter={(h) => h.toString().padStart(2, '0')}
+          label="Hours"
+        />
+
+
+
+        {/* Minutes column */}
+        <PickerColumn
+          values={minutes}
+          selectedValue={selectedMinutes}
+          setValue={setSelectedMinutes}
+          formatter={(m) => m.toString().padStart(2, '0')}
+          label="Minutes"
+        />
+      </div>
+    </div>
+  );
+};
+
 
 const AlarmForm: React.FC<AlarmFormProps> = ({ existingAlarm, onSave, onClose }) => {
   // Initialize form state with default values or existing alarm
@@ -144,15 +324,13 @@ const AlarmForm: React.FC<AlarmFormProps> = ({ existingAlarm, onSave, onClose })
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Time picker */}
+          {/* iPhone-style Time picker */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-400 mb-2">Time</label>
-            <input
-              type="time"
+            <IPhoneTimePicker
               value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full bg-gray-900 bg-opacity-40 text-white text-2xl py-3 px-4 rounded-lg border border-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none focus:bg-opacity-60 transition-colors shadow-inner"
-              required
+              onChange={setTime}
+              className="w-full"
             />
           </div>
 
