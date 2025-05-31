@@ -339,7 +339,7 @@ const AlarmDisplay: React.FC<AlarmDisplayProps> = ({
                 </div>
 
                {/* Regular Actions */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid ${alarm.isSnoozeEnabled ? 'grid-cols-3 gap-3' : 'grid-cols-1 gap-1'}`}>
                     {alarm.isSnoozeEnabled && <button
                         onClick={handleSnooze} // Snooze keeps the alarm scheduled later
                         className="bg-gradient-to-r from-amber-700 to-amber-600 text-white py-4 px-2 rounded-xl font-medium shadow-md hover:from-amber-600 hover:to-amber-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-gray-900"
@@ -403,7 +403,7 @@ const AlarmDisplay: React.FC<AlarmDisplayProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className={`grid ${alarm.isSnoozeEnabled ? 'grid-cols-3 gap-3' : 'grid-cols-2 gap-4'}`}>
                 <button
                   onClick={handleIgnoreAlarm} // This will transition to 'snooze' state for tapping
                   className="bg-gradient-to-r from-red-800 to-red-700 text-white py-4 px-2 rounded-xl font-medium shadow-md hover:from-red-700 hover:to-red-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
@@ -416,12 +416,13 @@ const AlarmDisplay: React.FC<AlarmDisplayProps> = ({
                 >
                   Wake Up!
                 </button>
-                <button
+                {alarm.isSnoozeEnabled && <button
                   onClick={handleSnooze} // Standard snooze
                   className="bg-gradient-to-r from-amber-700 to-amber-600 text-white py-4 px-2 rounded-xl font-medium shadow-md hover:from-amber-600 hover:to-amber-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-gray-900"
                 >
                   Snooze
                 </button>
+                }
               </div>
             </div>
           </>
