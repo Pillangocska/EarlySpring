@@ -27,12 +27,12 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, w
     if (days.length === 7) {
       return 'Every day';
     } else if (days.length === 5 &&
-               days.includes('Mon') && days.includes('Tue') &&
-               days.includes('Wed') && days.includes('Thu') &&
-               days.includes('Fri')) {
+      days.includes('Mon') && days.includes('Tue') &&
+      days.includes('Wed') && days.includes('Thu') &&
+      days.includes('Fri')) {
       return 'Weekdays';
     } else if (days.length === 2 &&
-               days.includes('Sat') && days.includes('Sun')) {
+      days.includes('Sat') && days.includes('Sun')) {
       return 'Weekends';
     } else {
       return days.join(', ');
@@ -217,6 +217,11 @@ const AlarmItem: React.FC<AlarmItemProps> = ({ alarm, onEdit, onAlarmsChanged, w
               {alarm.isSnoozeEnabled && (
                 <span className="mr-2">
                   💤 Snooze
+                </span>
+              )}
+              {alarm.weatherAlert && (
+                <span className="mr-2">
+                  🌤️ Weather Alert
                 </span>
               )}
             </div>

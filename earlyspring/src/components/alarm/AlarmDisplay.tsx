@@ -93,6 +93,7 @@ const AlarmDisplay: React.FC<AlarmDisplayProps> = ({
   const [sleepDuration, setSleepDuration] = useState<string>('Calculating...'); // Placeholder
   const [sleepFeeling, setSleepFeeling] = useState<'bad' | 'neutral' | 'good' | null>(null);
   const [isNight, setIsNight] = useState<boolean>(isNighttime()); // For weather icon
+  const [wakeUpEnabled, setWakeUpEnabled] = useState<boolean>(false); // Control wakeup button state
 
   // Calculate time, date, and update night status
   useEffect(() => {
@@ -194,6 +195,10 @@ const AlarmDisplay: React.FC<AlarmDisplayProps> = ({
         // Allow ignoring directly from initial state, but maybe make it harder?
         // For simplicity, let's treat "Ignore" from initial state as snooze state entry
         setDisplayState('snooze');
+        setTimeout(() => {
+          setWakeUpEnabled(true); // Enable wakeup button after first ignore tap
+          console.log("Button enabled!");
+        }, 5000); // Delay to allow user to see the first tap
         setTapCount(50); // Reset taps when entering snooze state this way
     }
   };
@@ -347,8 +352,8 @@ const AlarmDisplay: React.FC<AlarmDisplayProps> = ({
                          Snooze
                     </button>}
                     <button
-                        onClick={handleWakeUp}
-                        className="bg-gradient-to-r from-green-700 to-green-600 text-white py-4 px-2 rounded-xl font-medium shadow-md hover:from-green-600 hover:to-green-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                        onClick={handleWakeUp} disabled={!wakeUpEnabled}
+                        className={` ${wakeUpEnabled ? 'bg-gradient-to-r from-green-700 to-green-600' : 'bg-gray-400'} text-white py-4 px-2 rounded-xl font-medium shadow-md hover:from-green-600 hover:to-green-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900`}
                     >
                         Wake Up!
                     </button>
